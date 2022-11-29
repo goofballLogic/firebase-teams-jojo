@@ -26,6 +26,9 @@ service cloud.firestore {
         && request.auth.token.email.lower() == resource.data.email.lower()
         && request.resource.data.accepted.user == request.auth.uid;
     }
+    function canCreateInvite() {
+      return canAdministerTeam(request.resource.data.team.id)
+    }
     function canReadInvite(inviteId) {
       return canReadInviteDoc(get(/databases/$(database)/documents/teams-invites/$(inviteId)))
     }
@@ -36,8 +39,8 @@ service cloud.firestore {
     }
 
     match /teams-invites/{inviteId} {
-      allow create: if request.auth != null;
-      allow read: if canReadInvite(inviteId);
+      allow create: if request.auth != null && canCreateInvite();
+      allow read: if request.auth != null && canReadInvite(inviteId);
       allow update: if request.auth != null && canAcceptInvite();
     }
 
