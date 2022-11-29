@@ -1,0 +1,63 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function canCreateTeams() {
+      return canCreateTeamsDoc(get(/databases/$(database)/documents/teams-users/$(request.auth.uid)));
+    }
+    function canCreateTeamsDoc(user) {
+      return user != null && user.data.entitlements.teams > 0;
+    }
+    function canAdministerTeam(teamId) {
+      return canCreateTeams() && canAdministerTeamDoc(get(/databases/$(database)/documents/teams-teams/$(teamId)));
+    }
+    function canAdministerTeamDoc(team) {
+      return team != null
+        && (request.auth.uid in team.data.admins);
+    }
+    function isTeamMember(teamId) {
+      return isTeamMemberDoc(get(/databases/$(database)/documents/teams-teams/$(teamId)));
+    }
+    function isTeamMemberDoc(team) {
+      return team != null
+        && (request.auth.uid in team.data.members);
+    }
+    function canAcceptInvite() {
+      return request.auth.token.email_verified
+        && request.auth.token.email.lower() == resource.data.email.lower()
+        && request.resource.data.accepted.user == request.auth.uid;
+    }
+    function canReadInvite(inviteId) {
+      return canReadInviteDoc(get(/databases/$(database)/documents/teams-invites/$(inviteId)))
+    }
+    function canReadInviteDoc(invite) {
+      return invite != null
+        && request.auth.token.email_verified
+        && request.auth.token.email.lower() == request.auth.token.email.lower()
+    }
+
+    match /teams-invites/{inviteId} {
+      allow create: if request.auth != null;
+      allow read: if canReadInvite(inviteId);
+      allow update: if request.auth != null && canAcceptInvite();
+    }
+
+    match /teams-users/{userId} {
+        allow create, read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    match /teams-users/{userId}/public/{alsoUserId} {
+      allow create, write: if request.auth != null
+        && request.auth.uid == alsoUserId
+        && request.auth.uid == userId;
+      allow read: if request.auth != null;
+    }
+
+    match /teams-teams/{teamId} {
+        allow read: if request.auth != null && isTeamMember(teamId);
+        allow create: if request.auth != null && canCreateTeams();
+        allow update, delete: if request.auth != null && canAdministerTeam(teamId);
+    }
+
+  }
+
+}
