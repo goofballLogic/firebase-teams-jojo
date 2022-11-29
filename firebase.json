@@ -5,6 +5,25 @@
       "firebase.json",
       "**/.*",
       "**/node_modules/**"
+    ],
+    "redirects": [
+      {
+        "source": "/latest/:rest*",
+        "destination": "/0.0.1/:rest*",
+        "type": 302
+      }
     ]
+  },
+  "emulators": {
+    "firestore": {
+      "port": 8081
+    },
+    "hosting": {
+      "port": 5001
+    },
+    "ui": {
+      "enabled": true
+    },
+    "singleProjectMode": true
   }
 }
