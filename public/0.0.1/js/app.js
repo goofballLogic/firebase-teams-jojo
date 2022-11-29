@@ -36,6 +36,7 @@ init({
 
     users: collection(db, "teams-users"),
     teams: collection(db, "teams-teams"),
-    invites: collection(db, "teams-invites")
+    invites: collection(db, "teams-invites"),
+    usersPublic: collection(db, "teams-users-public"),
 
 });

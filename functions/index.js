@@ -9,7 +9,8 @@ function buildIntegration() {
     const firestore = admin.firestore();
     return {
         users: firestore.collection("teams-users"),
-        teams: firestore.collection("teams-teams")
+        teams: firestore.collection("teams-teams"),
+        usersPublic: firestore.collection("teams-users-public")
     };
 
 }

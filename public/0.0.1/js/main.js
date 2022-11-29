@@ -15,6 +15,7 @@ export function init({
     signOut,
 
     users,
+    usersPublic,
     teams,
     invites,
 
@@ -24,14 +25,14 @@ export function init({
     deleteField
 
 }) {
-    const simpleRender = () => render({ main, nav, GoogleAuthProvider, auth, signInWithPopup, signOut, users, teams, invites, doc, getDoc, setDoc, deleteField });
+    const simpleRender = () => render({ main, nav, GoogleAuthProvider, auth, signInWithPopup, signOut, users, usersPublic, teams, invites, doc, getDoc, setDoc, deleteField });
     handleAuthStateChanged({ onAuthStateChanged, auth }, simpleRender);
     simpleRender();
 }
 
-function render({ main, nav, GoogleAuthProvider, auth, signInWithPopup, signOut, users, teams, invites, doc, getDoc, setDoc, deleteField }) {
+function render({ main, nav, GoogleAuthProvider, auth, signInWithPopup, signOut, users, usersPublic, teams, invites, doc, getDoc, setDoc, deleteField }) {
     nav.innerHTML = renderNav(model);
-    initTeams({ container: main, state: model, users, teams, invites, doc, getDoc, setDoc, deleteField });
+    initTeams({ container: main, state: model, users, usersPublic, teams, invites, doc, getDoc, setDoc, deleteField });
     addEventListeners({ main, nav, GoogleAuthProvider, auth, signInWithPopup, signOut });
 }
 

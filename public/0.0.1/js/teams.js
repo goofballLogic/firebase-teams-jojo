@@ -4,13 +4,13 @@ import { INVITATION_MODE, main } from "./views-teams.js";
 let renderBound = () => { };
 let addEventListenersBound = () => { };
 
-export async function initTeams({ container, state, users, teams, invites, doc, getDoc, setDoc, deleteField }) {
+export async function initTeams({ container, state, users, usersPublic, teams, invites, doc, getDoc, setDoc, deleteField }) {
 
     updateStateFromURL({ state });
     if (state.user) {
 
-        await loadUserDetails({ state, users, doc, getDoc });
-        await ensurePublicDetails({ state, users, doc, setDoc });
+        await loadUserDetails({ state, users, usersPublic, doc, getDoc });
+        await ensurePublicDetails({ state, usersPublic, doc, setDoc });
 
     }
     if (state.ftj.mode === INVITATION_MODE) {
@@ -19,7 +19,7 @@ export async function initTeams({ container, state, users, teams, invites, doc, 
 
     }
     renderBound = render.bind(this, { container, state });
-    addEventListenersBound = addEventListeners.bind(this, { container, state, users, teams, invites, doc, getDoc, setDoc, deleteField });
+    addEventListenersBound = addEventListeners.bind(this, { container, state, users, usersPublic, teams, invites, doc, getDoc, setDoc, deleteField });
     renderBound();
 
 }
@@ -61,10 +61,10 @@ function updateStateFromURL({ state }) {
 
 }
 
-function addEventListeners({ container, state, users, teams, invites, doc, getDoc, setDoc, deleteField }) {
+function addEventListeners({ container, state, users, usersPublic, teams, invites, doc, getDoc, setDoc, deleteField }) {
 
     for (const form of container.querySelectorAll("form.add-team"))
-        form.addEventListener("submit", handleAddTeamSubmit.bind(this, { state, users, teams, doc, getDoc, setDoc }));
+        form.addEventListener("submit", handleAddTeamSubmit.bind(this, { state, users, usersPublic, teams, doc, getDoc, setDoc }));
     for (const a of container.querySelectorAll("a.client-side"))
         a.addEventListener("click", handleClientSideNav);
     for (const form of container.querySelectorAll("form#delete-team"))
@@ -93,14 +93,14 @@ async function loadUserDetails({ state, users, doc, getDoc }) {
     const teams = state.user.details.teams || {};
     state.user.details.teams = teams;
     for (const teamId in teams) {
-        const team = await loadTeamDetails({ getDoc, users, teams, teamId });
+        const team = await loadTeamDetails({ getDoc, teams, teamId });
         teams[teamId] = team;
     }
 
 }
 
-async function ensurePublicDetails({ state, users, doc, setDoc }) {
-    const ref = doc(users, state.user.uid, "public", state.user.uid);
+async function ensurePublicDetails({ state, usersPublic, doc, setDoc }) {
+    const ref = doc(usersPublic, state.user.uid);
     setDoc(ref, {
         email: state.user.email,
         displayName: state.user.displayName
@@ -246,7 +246,7 @@ async function handleRenameTeamSubmit({ state, teams, users, doc, getDoc, setDoc
 
 }
 
-async function handleAddTeamSubmit({ state, users, teams, doc, getDoc, setDoc }, e) {
+async function handleAddTeamSubmit({ state, users, usersPublic, teams, doc, getDoc, setDoc }, e) {
 
     e.preventDefault();
     const form = e.target;
@@ -256,7 +256,7 @@ async function handleAddTeamSubmit({ state, users, teams, doc, getDoc, setDoc },
 
     const teamsRef = doc(teams, generateName(Date.now()));
     const usersRef = doc(users, state.user.uid);
-    const usersPublicRef = doc(users, state.user.uid, "public", state.user.uid);
+    const usersPublicRef = doc(usersPublic, state.user.uid);
     // create team
     const team = {
         name,

@@ -45,9 +45,8 @@ service cloud.firestore {
         allow create, read, write: if request.auth != null && request.auth.uid == userId;
     }
 
-    match /teams-users/{userId}/public/{alsoUserId} {
+    match /teams-users-public/{userId} {
       allow create, write: if request.auth != null
-        && request.auth.uid == alsoUserId
         && request.auth.uid == userId;
       allow read: if request.auth != null;
     }

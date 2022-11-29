@@ -6,7 +6,7 @@ Simple teams and entitlements in Firebase
 - [x] Create team
 - [x] Delete team
 - [x] Rename team
-- [ ] View team members
+- [x] View team members
 - [x] Invite team member
 - [ ] Remove team member
 

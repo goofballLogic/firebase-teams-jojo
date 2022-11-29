@@ -1,7 +1,8 @@
 exports.handleInvitationAccept = async function handleInvitationAccept({
     change,
     teams,
-    users
+    users,
+    usersPublic
 }) {
     const { after } = change;
     const data = after.data();
@@ -10,7 +11,7 @@ exports.handleInvitationAccept = async function handleInvitationAccept({
     if (!uid) return;
     if (!teamId) return;
     const userRef = users.doc(uid);
-    const publicUserRef = userRef.collection("public").doc(uid);
+    const publicUserRef = usersPublic.doc(uid);
     const teamRef = teams.doc(teamId);
     await Promise.all([
         teamRef.set({ members: { [uid]: publicUserRef } }, { merge: true }),
