@@ -1,18 +1,25 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    function canCreateTeams() {
-      return canCreateTeamsDoc(get(/databases/$(database)/documents/teams-users/$(request.auth.uid)));
+    function canAccountCreateTeams() {
+      return canAccountCreateTeamsDoc(get(request.resource.data.account));
     }
-    function canCreateTeamsDoc(user) {
-      return user != null && user.data.entitlements.teams > 0;
+    function canAccountCreateTeamsDoc(account) {
+      return account != null
+        && account.data.entitlements.teams > 0
+        && canAdministerAccountDoc(account);
     }
+    function canAdministerAccountDoc(account) {
+      return account != null && request.auth.uid in account.data.admins;
+    }
+
     function canAdministerTeam(teamId) {
-      return canCreateTeams() && canAdministerTeamDoc(get(/databases/$(database)/documents/teams-teams/$(teamId)));
+      return canAdministerTeamDoc(get(/databases/$(database)/documents/teams-teams/$(teamId)));
     }
     function canAdministerTeamDoc(team) {
       return team != null
-        && (request.auth.uid in team.data.admins);
+        && (request.auth.uid in team.data.admins)
+        || canAdministerAccountDoc(get(team.data.account));
     }
     function isTeamMember(teamId) {
       return isTeamMemberDoc(get(/databases/$(database)/documents/teams-teams/$(teamId)));
@@ -21,27 +28,37 @@ service cloud.firestore {
       return team != null
         && (request.auth.uid in team.data.members);
     }
-    function canAcceptInvite() {
+    function isMemberSelfRemove() {
+      return isOnlyMembersAffected(request.resource.data.diff(resource.data))
+        && isMemberSelfRemoveDiff(request.resource.data.members.diff(resource.data.members))
+    }
+    function isOnlyMembersAffected(diff) {
+      return diff.affectedKeys().hasOnly(["members"])
+    }
+    function isMemberSelfRemoveDiff(diff) {
+      return diff.affectedKeys().hasOnly([request.auth.uid])
+        && diff.removedKeys().hasOnly([request.auth.uid])
+    }
+
+    function canCreateInvite(){
+      return canAdministerTeamDoc(get(request.resource.data.team))
+        && isValidInvite();
+    }
+    function isValidInvite() {
+      return request.resource.data.from[4] == request.auth.uid;
+    }
+    function isAcceptInvitation() {
       return request.auth.token.email_verified
-        && request.auth.token.email.lower() == resource.data.email.lower()
-        && request.resource.data.accepted.user == request.auth.uid;
-    }
-    function canCreateInvite() {
-      return canAdministerTeam(request.resource.data.team.id)
-    }
-    function canReadInvite(inviteId) {
-      return canReadInviteDoc(get(/databases/$(database)/documents/teams-invites/$(inviteId)))
-    }
-    function canReadInviteDoc(invite) {
-      return invite != null
-        && request.auth.token.email_verified
-        && request.auth.token.email.lower() == request.auth.token.email.lower()
+        && request.auth.token.email.lower() == resource.data.to.email.lower()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["accepted"])
+        && request.resource.data.accepted.keys().hasOnly(["user", "when"])
+        && request.resource.data.accepted.when == request.time;
+
     }
 
     match /teams-invites/{inviteId} {
-      allow create: if request.auth != null && canCreateInvite();
-      allow read: if request.auth != null && canReadInvite(inviteId);
-      allow update: if request.auth != null && canAcceptInvite();
+      allow create, read, update, delete: if request.auth != null && canCreateInvite()
+      allow update: if request.auth != null && isAcceptInvitation();
     }
 
     match /teams-users/{userId} {
@@ -49,15 +66,13 @@ service cloud.firestore {
     }
 
     match /teams-users-public/{userId} {
-      allow create, write: if request.auth != null
-        && request.auth.uid == userId;
       allow read: if request.auth != null;
     }
 
     match /teams-teams/{teamId} {
         allow read: if request.auth != null && isTeamMember(teamId);
-        allow create: if request.auth != null && canCreateTeams();
-        allow update, delete: if request.auth != null && canAdministerTeam(teamId);
+        allow create: if request.auth != null && canAccountCreateTeams();
+        allow update, delete: if request.auth != null && (canAdministerTeam(teamId) || isMemberSelfRemove());
     }
 
   }

@@ -15,7 +15,7 @@ export function main({ user, ftj }) {
     const teams = user?.details?.teams || {};
     const team = teams[teamId];
     if (mode === TEAM_MODE) {
-        return editTeam(team);
+        return editTeam({ team, user });
     } else if (mode === INVITATION_MODE) {
         return acceptInvitation({ user, invitation });
     } else {
@@ -65,8 +65,9 @@ function acceptInvitation({ user, invitation }) {
 
 }
 
-function editTeam(team) {
+function editTeam({ team, user }) {
 
+    const isAdmin = user?.uid in team.admins;
     return `
 
         <a class="client-side home" href="${defaultUrl()}">back</a>
@@ -75,18 +76,33 @@ function editTeam(team) {
             ${!team ? "Team not found" : `
 
                 <header>Team: ${team.name}</header>
-                <form id="rename-team">
+                ${!isAdmin ? "" : `
 
-                    <input type="text" name="name" value="${team.name}" />
-                    <button>Rename</button>
+                    <form id="rename-team">
 
-                </form>
-                <form id="delete-team">
+                        <input type="text" name="name" value="${team.name}" />
+                        <button>Rename</button>
 
-                    <button>Delete</button>
+                    </form>
+                    <form id="delete-team">
 
-                </form>
-                ${teamMembers(team)}
+                        <button>Delete</button>
+
+                    </form>
+
+                `}
+                ${teamMembers({ team, user, isAdmin })}
+                ${!isAdmin ? "" : `
+
+                    <form id="invite-member">
+
+                        <input type="email" name="email" placeholder="Email to invite" />
+                        <input type="text" name="name" placeholder="Name of person to invite" />
+                        <button>Invite</button>
+
+                    </form>
+
+                `}
 
             `}
 
@@ -96,7 +112,7 @@ function editTeam(team) {
 
 }
 
-function teamMembers(team) {
+function teamMembers({ team, user, isAdmin }) {
 
     if (!team) return "";
     const members = Object
@@ -106,28 +122,30 @@ function teamMembers(team) {
 
     <ol class="team-members">
 
-        ${members.map(member => teamMember(member)).join("")}
+        ${members.map(member => teamMember({ member, user, isAdmin })).join("")}
 
     </ol>
-    <form id="invite-member">
-
-        <input type="email" name="email" placeholder="Email to invite" />
-        <input type="text" name="name" placeholder="Name of person to invite" />
-        <button>Invite</button>
-
-    </form>
 
     `;
 
 }
 
-function teamMember({ id, details, admin }) {
+function teamMember({ member, user, isAdmin }) {
 
+    const { id, details, admin } = member;
     return `
         <li>
             <span class="display-name">${details.displayName}<span>
             <span class="email">${details.email}</span>
             <span class="role">${admin ? "ADMIN" : ""}</span>
+            ${(!isAdmin || id === user.uid) ? "" : `
+
+                <form id="remove-team-member">
+                    <input type="hidden" name="member" value="${id}" />
+                    <button>Remove</button>
+                </form>
+
+            `}
         </li>
     `;
 

@@ -74,7 +74,9 @@ function addEventListeners({ container, state, users, usersPublic, teams, invite
     for (const form of container.querySelectorAll("form#invite-member"))
         form.addEventListener("submit", handleInviteMemberSubmit.bind(this, { state, invites, doc, setDoc }));
     for (const form of container.querySelectorAll("form#accept-invitation"))
-        form.addEventListener("submit", handleAcceptInvitationsubmit.bind(this, { state, invites, users, teams, doc, setDoc }));
+        form.addEventListener("submit", handleAcceptInvitationSubmit.bind(this, { state, invites, users, teams, doc, setDoc }));
+    for (const form of container.querySelectorAll("form#remove-team-member"))
+        form.addEventListener("submit", handleRemoveTeamMemberSubmit.bind(this, { state, teams, users, doc, setDoc, deleteField }));
 }
 
 function handleClientSideNav(e) {
@@ -180,7 +182,7 @@ async function handleInviteMemberSubmit({ state, invites, doc, setDoc }, e) {
 
 }
 
-async function handleAcceptInvitationsubmit({ state, users, teams, invites, doc, getDoc, setDoc }, e) {
+async function handleAcceptInvitationSubmit({ state, invites, doc, setDoc }, e) {
 
     e.preventDefault();
     const ref = doc(invites, state.ftj?.invitationId);
@@ -190,6 +192,42 @@ async function handleAcceptInvitationsubmit({ state, users, teams, invites, doc,
             user: state.user?.uid
         }
     }, { merge: true });
+
+}
+
+async function handleRemoveTeamMemberSubmit({ state, teams, users, doc, setDoc, deleteField }, e) {
+
+    e.preventDefault();
+    const form = e.target;
+    const formData = new FormData(form);
+    const member = formData.get("member");
+
+    const userId = state.user?.uid;
+    const teamId = state.ftj?.teamId;
+    const team = state.user?.details?.teams[teamId];
+    if (userId && teamId && team) {
+
+        const memberInfo = team.members[member];
+        if (memberInfo) {
+
+            console.log(memberInfo);
+            if (confirm(`Remove team member: ${memberInfo.displayName} (${memberInfo.email}) from team: ${team.name}?`)) {
+
+                const userRef = doc(users, member);
+                const teamRef = doc(teams, teamId);
+
+                await setDoc(teamRef, { members: { [userId]: deleteField() } }, { merge: true });
+                await setDoc(userRef, { teams: { [teamId]: deleteField() } }, { merge: true });
+
+                // refresh user details
+                await loadUserDetails({ state, users, doc, getDoc });
+                renderBound();
+
+            }
+
+        }
+
+    }
 
 }
 
