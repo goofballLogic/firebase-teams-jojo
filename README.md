@@ -27,8 +27,6 @@ Invitations are issued against a particular email address and must match the log
 - [x] Nobody can update Public user directly
 - [x] Invitation can only be created by account or team admin
 - [x] Only a logged in user with matching email can accept an invitation
-- [ ] Person creating a team must create it with themselves as a member
-- [ ] Person creating a team must create it with themselves as an admin
 
 #### Via functions
 

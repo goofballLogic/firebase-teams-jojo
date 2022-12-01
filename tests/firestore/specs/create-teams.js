@@ -42,6 +42,7 @@ export function createTeamsSpec(testEnv) {
 
         });
 
+
     });
 
     describe("A team can only be created if the account has entitlements to create a team", () => {
