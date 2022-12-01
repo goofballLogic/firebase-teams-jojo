@@ -9,6 +9,9 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: install functions packages
+        run: cd functions; npm install
+
       - name: install tests packages
         run: cd tests; npm install
 
