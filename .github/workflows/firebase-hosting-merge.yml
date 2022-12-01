@@ -38,11 +38,20 @@ jobs:
       run: npm install
       working-directory: functions
 
+    - uses: actions/cache@v3
+      name: Check if Playwright browser is cached
+      id: playwright-cache
+      with:
+        path: |
+          ~/.cache/ms-playwright
+        key: ${{ runner.os }}-playwright-1.28.1
+
     - name: Install dependencies
       run: npm ci
       working-directory: e2e
 
-    - name: Install Playwright Browsers
+    - name: Install Playwright browser if not cached
+      if: steps.playwright-cache.outputs.cache-hit != 'true'
       run: npx playwright install --with-deps
       working-directory: e2e
 
