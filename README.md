@@ -3,11 +3,11 @@ Simple teams and entitlements in Firebase
 
 ## Features
 
-- [x] Create team
-- [x] Delete team
-- [x] Rename team
-- [x] View team members
-- [x] Invite team member
+- [ ] Create team
+- [ ] Delete team
+- [ ] Rename team
+- [ ] View team members
+- [ ] Invite team member
 - [ ] Remove team member
 
 ### Invitations
@@ -30,11 +30,12 @@ Invitations are issued against a particular email address and must match the log
 
 #### Via functions
 
-- [ ] Account has record of teams
+- [x] Account has record of teams
 - [ ] Person creating a team is a member
 - [ ] Public user is created by the server in response to user write
 - [ ] Team membership can be updated by the server in response to invitation acceptance
 
+### Schema
 - Account has...
   - 0 or many teams
   - 0 or many users
