@@ -10,10 +10,10 @@ export async function createTeam(db, { name, account, id = generateId("_team") }
     return ref;
 
 }
-export async function createUserPrivate(db, { name, email, id = generateId() }) {
+export async function createUserPrivate(db, { name, email, id = generateId(), extras = {} }) {
 
     const ref = doc(db, `${collections.USERS}/${id}`);
-    await setDoc(ref, { name, email });
+    await setDoc(ref, { name, email, ...extras });
     return ref;
 
 }
@@ -98,12 +98,16 @@ export async function acceptInvitation(db, { invite, userPublic, team, poisonAcc
     invite = doc(db, invite.path);
     const patch = { accepted: { when: serverTimestamp(), user: userPublic } };
     if (team) {
+
         // should be disallowed by the rules
         team = doc(db, team.path)
         patch.team = team;
+
     }
     if (poisonAccept) {
+
         patch.accepted.when = "last year";
+
     }
     await setDoc(invite, patch, { merge: true });
 

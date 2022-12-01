@@ -1,54 +1,71 @@
 exports.handleInvitationAccept = async function handleInvitationAccept({
     change,
-    teams,
-    users,
-    usersPublic
+    logger
 }) {
-    return;
-    const { after } = change;
-    const data = after.data();
-    console.log(change);
-    const uid = data.accepted?.user;
-    const teamId = data.team.id;
-    if (!uid) return;
-    if (!teamId) return;
-    const userRef = users.doc(uid);
-    const publicUserRef = usersPublic.doc(uid);
-    const teamRef = teams.doc(teamId);
-    await Promise.all([
-        teamRef.set({ members: { [uid]: publicUserRef } }, { merge: true }),
-        userRef.set({ teams: { [teamId]: teamRef } }, { merge: true })
-    ]);
+
+    const { before, after } = change;
+    const beforeAccepted = before?.data()?.accepted;
+    const afterAccepted = after?.data()?.accepted;
+    const team = after?.data()?.team;
+    if (afterAccepted?.user && team)
+        if (beforeAccepted?.user !== afterAccepted.user) {
+
+            const userId = afterAccepted.user.id;
+            logger.debug("Adding invitee to team", { user: userId, team: team.id });
+            const patch = { members: { [userId]: afterAccepted.user } };
+            await team.set(patch, { merge: true });
+
+        }
 }
 
-exports.handleTeamsModified = async function handleTeamsWrite({
+exports.handleTeamsWrite = async function handleTeamsWrite({
     change,
-    context,
     teams,
-    accounts,
-    logger,
-    deleteField
+    deleteField,
+    logger
 }) {
 
-
-    const afterTeamId = change.after?.id;
+    const teamId = change.after?.id;
     const beforeAccount = change.before?.data()?.account;
     const afterAccount = change.after?.data()?.account;
     if (beforeAccount?.path !== afterAccount?.path) {
 
         if (afterAccount) {
 
-            const patch = { teams: { [afterTeamId]: teams.doc(afterTeamId) } };
+            logger.debug("Adding team to account", { account: afterAccount.id, team: teamId });
+            const patch = { teams: { [teamId]: teams.doc(teamId) } };
             await afterAccount.set(patch, { merge: true });
 
         }
         if (beforeAccount) {
 
-            const patch = { teams: { [afterTeamId]: deleteField } };
+            logger.debug("Removing team from account", { account: beforeAccount.id, team: teamId });
+            const patch = { teams: { [teamId]: deleteField } };
             await beforeAccount.set(patch, { merge: true });
 
         }
 
     }
+
+}
+
+exports.handleUsersWrite = async function handleUsersWrite({
+    change,
+    usersPublic,
+    logger
+}) {
+
+    const beforeUser = change.before?.data();
+    const afterUser = change.after?.data();
+    if (afterUser)
+        if ((afterUser?.email != beforeUser?.email) || (afterUser?.name != beforeUser?.name)) {
+
+            const userId = change.after.id;
+            logger.debug("Writing user public record", { user: userId });
+            const { name, email } = afterUser;
+            const ref = usersPublic.doc(userId);
+            await ref.set({ name, email });
+
+        }
 
 }

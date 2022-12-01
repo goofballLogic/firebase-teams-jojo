@@ -1,6 +1,6 @@
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
-const { handleInvitationAccept, handleTeamsModified } = require("./firebase-teams-integration");
+const { handleInvitationAccept, handleTeamsWrite, handleUsersWrite } = require("./firebase-teams-integration");
 
 admin.initializeApp();
 
@@ -24,9 +24,17 @@ exports.handleInvitationAccept = functions.firestore
         ...buildIntegration()
     }));
 
-exports.handleTeamsModified = functions.firestore
+exports.handleTeamsWrite = functions.firestore
     .document("teams-teams/{id}")
-    .onWrite((change, context) => handleTeamsModified({
+    .onWrite((change, context) => handleTeamsWrite({
+        context,
+        change,
+        ...buildIntegration()
+    }));
+
+exports.handleUsersWrite = functions.firestore
+    .document("teams-users/{id}")
+    .onWrite((change, context) => handleUsersWrite({
         context,
         change,
         ...buildIntegration()

@@ -19,3 +19,9 @@ export async function readAccount(db, { account }) {
     return await getDoc(ref);
 
 }
+export async function readTeam(db, { team }) {
+
+    const ref = doc(db, team.path);
+    return await getDoc(ref);
+
+}

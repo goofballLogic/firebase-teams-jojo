@@ -7,11 +7,14 @@ service cloud.firestore {
     }
     function canAccountCreateTeamsDoc(account) {
       return account != null
+        && account.data.entitlements != null
+        && debug("teams" in account.data.entitlements)
         && account.data.entitlements.teams > 0
         && canAdministerAccountDoc(account);
     }
     function canAdministerAccountDoc(account) {
-      return account != null && request.auth.uid in account.data.admins;
+      return account != null
+        && request.auth.uid in account.data.admins;
     }
 
     function canAdministerTeam(teamId) {

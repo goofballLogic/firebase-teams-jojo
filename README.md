@@ -27,13 +27,14 @@ Invitations are issued against a particular email address and must match the log
 - [x] Nobody can update Public user directly
 - [x] Invitation can only be created by account or team admin
 - [x] Only a logged in user with matching email can accept an invitation
+- [ ] Person creating a team must create it with themselves as a member
+- [ ] Person creating a team must create it with themselves as an admin
 
 #### Via functions
 
 - [x] Account has record of teams
-- [ ] Person creating a team is a member
-- [ ] Public user is created by the server in response to user write
-- [ ] Team membership can be updated by the server in response to invitation acceptance
+- [x] Public user is created by the server in response to user write
+- [x] Team membership can be updated by the server in response to invitation acceptance
 
 ### Schema
 - Account has...

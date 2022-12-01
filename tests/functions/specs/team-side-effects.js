@@ -1,9 +1,10 @@
-import { createAccount, createTeam, reassignTeamToAccount } from "../../actions/commands";
-import { readAccount } from "../../actions/queries";
+import { createAccount, createTeam, createUserPublic, makeAccountAdmin, reassignTeamToAccount } from "../../actions/commands";
+import { readAccount, readTeam } from "../../actions/queries";
+import { poll } from "./poll";
 
 export function teamSideEffects(testEnv) {
 
-    describe("An record of teams is maintained in the account object", () => {
+    describe("A record of teams is maintained in the account object", () => {
 
         let account;
         beforeEach(async () => {
@@ -11,7 +12,7 @@ export function teamSideEffects(testEnv) {
             await testEnv.withSecurityRulesDisabled(async (context) => {
 
                 const db = context.firestore();
-                account = await createAccount(db, { name: "Account 1" });
+                account = await createAccount(db, { name: "Account 1", entitlements: { teams: 999 } });
 
             });
 
@@ -19,15 +20,18 @@ export function teamSideEffects(testEnv) {
 
         describe("When a team is created", () => {
 
-            let team;
+            let team, admin;
             beforeEach(async () => {
 
                 await testEnv.withSecurityRulesDisabled(async (context) => {
 
                     const db = context.firestore();
-                    team = await createTeam(db, { name: "Team 1", account });
+                    admin = await createUserPublic(db, { name: "Mr. Admin", email: "admin@gmail.com" });
+                    makeAccountAdmin(db, { userPublic: admin, account });
 
                 });
+                const dbAsAdmin = await testEnv.authenticatedContext(admin.id).firestore();
+                team = await createTeam(dbAsAdmin, { name: "Team 1", account });
 
             });
 
@@ -37,6 +41,13 @@ export function teamSideEffects(testEnv) {
                 expect(accountData?.teams).toHaveProperty(team.id);
 
             });
+
+            // it("Then the creator becomes a member", async () => {
+
+            //     const teamData = await poll(() => findCreatorInTeam(testEnv, admin, team));
+            //     expect(teamData?.members).toHaveProperty(admin.id);
+
+            // });
 
             describe("But the team is moved to another account", () => {
 
@@ -110,11 +121,4 @@ async function findTeamNOTInAccount(testEnv, account, team) {
 
 }
 
-async function poll(strategy, delay = 250, retries = 10) {
-    while (retries > 0) {
-        const result = await strategy();
-        if (result !== undefined) return result;
-        await new Promise(resolve => setTimeout(resolve, delay));
-        retries--;
-    }
-}
+
