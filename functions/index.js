@@ -1,6 +1,6 @@
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
-const { handleInvitationAccept } = require("./firebase-teams-integration");
+const { handleInvitationAccept, handleTeamsModified } = require("./firebase-teams-integration");
 
 admin.initializeApp();
 
@@ -10,15 +10,24 @@ function buildIntegration() {
     return {
         users: firestore.collection("teams-users"),
         teams: firestore.collection("teams-teams"),
-        usersPublic: firestore.collection("teams-users-public")
+        usersPublic: firestore.collection("teams-users-public"),
+        logger: functions.logger,
+        deleteField: admin.firestore.FieldValue.delete()
     };
 
 }
 
-exports.handleInvitationAccept = functions
-    .firestore
-    .document("teams-invites/{inviteId}")
-    .onWrite((change, context) => handleInvitationAccept({
+exports.handleInvitationAccept = functions.firestore
+    .document("teams-invites/{id}")
+    .onWrite((change) => handleInvitationAccept({
+        change,
+        ...buildIntegration()
+    }));
+
+exports.handleTeamsModified = functions.firestore
+    .document("teams-teams/{id}")
+    .onWrite((change, context) => handleTeamsModified({
+        context,
         change,
         ...buildIntegration()
     }));

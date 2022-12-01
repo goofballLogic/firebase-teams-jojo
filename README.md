@@ -30,6 +30,7 @@ Invitations are issued against a particular email address and must match the log
 
 #### Via functions
 
+- [ ] Account has record of teams
 - [ ] Person creating a team is a member
 - [ ] Public user is created by the server in response to user write
 - [ ] Team membership can be updated by the server in response to invitation acceptance

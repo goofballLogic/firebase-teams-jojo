@@ -1,6 +1,6 @@
 import { assertFails, assertSucceeds } from "@firebase/rules-unit-testing";
-import { createUserPublic, updateUserPrivate, createUserPrivate, updateUserPublic } from "./actions/commands";
-import { readUserPrivate, readUserPublic } from "./actions/queries";
+import { createUserPublic, updateUserPrivate, createUserPrivate, updateUserPublic } from "../../actions/commands";
+import { readUserPrivate, readUserPublic } from "../../actions/queries";
 
 export function updatingUsers(testEnv) {
 

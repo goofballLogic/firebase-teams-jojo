@@ -2,7 +2,8 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     function canAccountCreateTeams() {
-      return canAccountCreateTeamsDoc(get(request.resource.data.account));
+      return request.resource.data.account != null
+        && canAccountCreateTeamsDoc(get(request.resource.data.account));
     }
     function canAccountCreateTeamsDoc(account) {
       return account != null
@@ -19,7 +20,7 @@ service cloud.firestore {
     function canAdministerTeamDoc(team) {
       return team != null
         && (request.auth.uid in team.data.admins)
-        || canAdministerAccountDoc(get(team.data.account));
+        || (team.data.account != null && canAdministerAccountDoc(get(team.data.account)));
     }
     function isTeamMember(teamId) {
       return isTeamMemberDoc(get(/databases/$(database)/documents/teams-teams/$(teamId)));
@@ -41,7 +42,8 @@ service cloud.firestore {
     }
 
     function canCreateInvite(){
-      return canAdministerTeamDoc(get(request.resource.data.team))
+      return (request.resource.data.team != null)
+        && canAdministerTeamDoc(get(request.resource.data.team))
         && isValidInvite();
     }
     function isValidInvite() {
