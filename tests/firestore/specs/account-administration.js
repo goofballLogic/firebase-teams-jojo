@@ -1,6 +1,6 @@
-import { assertFails, assertSucceeds } from "@firebase/rules-unit-testing";
+import { assertFails } from "@firebase/rules-unit-testing";
 import { expect } from "../../../e2e/fixtures";
-import { createAccount, makeAccountAdmin, createTeam, createUserPublic, makeTeamAdmin } from "../../actions/commands";
+import { createAccount, makeAccountAdmin, createUserPublic } from "../../actions/commands";
 import { listAccounts } from "../../actions/queries";
 
 export function accountAdministrationSpec(testEnv) {

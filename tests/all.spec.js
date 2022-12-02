@@ -9,6 +9,7 @@ import { invitationsSpecs } from "./firestore/specs/invitations";
 import { publicUserDocuments } from "./functions/specs/public-user-documents";
 import { acceptInvitations } from "./functions/specs/accept-invitations";
 import { accountAdministrationSpec } from "./firestore/specs/account-administration";
+import { listTeamsSpec } from "./firestore/specs/list-teams";
 
 const rulesFile = new URL("../firestore.rules", import.meta.url);
 const firestoreSpec = { rules: readFileSync(rulesFile, "utf8") };
@@ -28,6 +29,7 @@ describe("firebase", () => {
     updatingUsers(testEnv);
     invitationsSpecs(testEnv);
     accountAdministrationSpec(testEnv);
+    listTeamsSpec(testEnv);
 
 });
 

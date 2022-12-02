@@ -2,11 +2,11 @@ import { doc, setDoc, deleteField, serverTimestamp } from "firebase/firestore";
 import { collections } from "./collections";
 
 const generateId = (prefix = "test") => `${prefix}_${Math.random().toString().substring(2)}`;
-export async function createTeam(db, { name, account, id = generateId("_team") }) {
+export async function createTeam(db, { name, account, id = generateId("_team"), members = {} }) {
 
     account = doc(db, account.path);
     const ref = doc(db, `${collections.TEAMS}/${id}`);
-    await setDoc(ref, { name, account });
+    await setDoc(ref, { name, account, members });
     return ref;
 
 }

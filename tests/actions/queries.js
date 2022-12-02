@@ -39,3 +39,18 @@ export async function listAccounts(db, { userPublic }) {
     );
 
 }
+
+export async function listTeams(db, { userPublic }) {
+
+    const ref = collection(db, collections.TEAMS);
+
+    // firebase doesn't let us filter using rules alone. We have to actually query for documents that match our criteria.
+    // searching for a map path which is not null appears to be the only way to achieve this (i.e. members.MYUSERID != null)
+    return await getDocs(
+        query(
+            ref,
+            where(`members.${userPublic.id}`, "!=", null)
+        )
+    );
+
+}

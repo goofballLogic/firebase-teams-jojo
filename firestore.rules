@@ -75,7 +75,7 @@ service cloud.firestore {
     }
 
     match /teams-teams/{teamId} {
-        allow read: if request.auth != null && isTeamMember(teamId);
+        allow read: if request.auth != null && isTeamMemberDoc(resource);
         allow create: if request.auth != null && canAccountCreateTeams();
         allow update, delete: if request.auth != null && (canAdministerTeam(teamId) || isMemberSelfRemove());
     }
