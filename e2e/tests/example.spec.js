@@ -1,21 +1,18 @@
-// @ts-check
-const { test, expect } = require('@playwright/test');
+import { test, expect } from "../fixtures/index.js";
+const { describe, beforeEach } = test;
 
-test('homepage has title and links to intro page', async ({ page }) => {
-  await page.goto('https://playwright.dev/');
+beforeEach(async ({ app }) => {
 
-  // Expect a title "to contain" a substring.
-  await expect(page).toHaveTitle(/Playwright/);
+  await app.loginAsBob();
 
-  // create a locator
-  const getStarted = page.getByRole('link', { name: 'Get started' });
+});
 
-  // Expect an attribute "to be strictly equal" to the value.
-  await expect(getStarted).toHaveAttribute('href', '/docs/intro');
+describe("Something", async () => {
 
-  // Click the get started link.
-  await getStarted.click();
-  
-  // Expects the URL to contain intro.
-  await expect(page).toHaveURL(/.*intro/);
+  test("Something", async ({ page }) => {
+
+    throw new Error("Not implemented");
+
+  });
+
 });
