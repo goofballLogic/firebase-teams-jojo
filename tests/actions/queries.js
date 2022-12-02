@@ -1,4 +1,4 @@
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, getDocs, collection, where, query } from "firebase/firestore";
 import { collections } from "./collections";
 
 export async function readUserPrivate(db, { user }) {
@@ -23,5 +23,19 @@ export async function readTeam(db, { team }) {
 
     const ref = doc(db, team.path);
     return await getDoc(ref);
+
+}
+export async function listAccounts(db, { userPublic }) {
+
+    const ref = collection(db, collections.ACCOUNTS);
+
+    // firebase doesn't let us filter using rules alone. We have to actually query for documents that match our criteria.
+    // searching for a map path which is not null appears to be the only way to achieve this (i.e. admins.MYUSERID != null)
+    return await getDocs(
+        query(
+            ref,
+            where(`admins.${userPublic.id}`, "!=", null)
+        )
+    );
 
 }

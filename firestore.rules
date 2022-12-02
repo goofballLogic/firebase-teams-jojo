@@ -8,12 +8,13 @@ service cloud.firestore {
     function canAccountCreateTeamsDoc(account) {
       return account != null
         && account.data.entitlements != null
-        && debug("teams" in account.data.entitlements)
+        && "teams" in account.data.entitlements
         && account.data.entitlements.teams > 0
         && canAdministerAccountDoc(account);
     }
     function canAdministerAccountDoc(account) {
       return account != null
+        && "admins" in debug(account.data)
         && request.auth.uid in account.data.admins;
     }
 
@@ -77,6 +78,11 @@ service cloud.firestore {
         allow read: if request.auth != null && isTeamMember(teamId);
         allow create: if request.auth != null && canAccountCreateTeams();
         allow update, delete: if request.auth != null && (canAdministerTeam(teamId) || isMemberSelfRemove());
+    }
+
+    match /teams-accounts/{accountId} {
+      allow read: if request.auth != null
+        && debug(request.auth.uid) in debug(resource.data).admins
     }
 
   }
