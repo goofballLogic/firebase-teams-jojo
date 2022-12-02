@@ -1,8 +1,8 @@
 import { initializeApp }
     from "https://www.gstatic.com/firebasejs/9.14.0/firebase-app.js";
-import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, connectAuthEmulator }
+import { signInWithEmailAndPassword, getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, connectAuthEmulator }
     from "https://www.gstatic.com/firebasejs/9.14.0/firebase-auth.js";
-import { getFirestore, collection, doc, getDoc, setDoc, connectFirestoreEmulator, deleteField }
+import { getFirestore, collection, doc, getDoc, setDoc, connectFirestoreEmulator, deleteField, where, query, getDocs }
     from "https://www.gstatic.com/firebasejs/9.14.0/firebase-firestore.js";
 import { initTeams }
     from "./teams.js";
@@ -20,11 +20,14 @@ const app = initializeApp({
 
 
 const db = getFirestore(app);
-connectFirestoreEmulator(db, location.hostname, 8080);
 const auth = getAuth(app);
-connectAuthEmulator(auth, `http://${location.hostname}:9099`);
 const nav = document.querySelector("nav");
 const authModel = {};
+const teamsModel = {};
+
+connectAuthEmulator(auth, `http://${location.hostname}:9099`);
+connectFirestoreEmulator(db, location.hostname, 8080);
+
 
 const integration = {
 
@@ -43,6 +46,14 @@ const integration = {
 handleAuthStateChanged({ onAuthStateChanged, auth }, render);
 render();
 
+const url = new URL(location.href);
+const testLogin = url.searchParams.get("test-login");
+if (testLogin === "BobAccountAdmin") {
+    signInWithEmailAndPassword(auth, "bob.accountadmin@gmail.com", "Password1!");
+} else if (testLogin === "SallyNewUser") {
+    signInWithEmailAndPassword(auth, "sally.newuser@gmail.com", "Password1!");
+}
+
 function render() {
 
     nav.innerHTML = renderNav(authModel);
@@ -55,26 +66,45 @@ function render() {
         () => signOut(auth)
     );
     const container = document.querySelector("main");
-    const teamsModel = {};
+    if (!teamsModel.user) teamsModel.user = {};
+    Object.assign(teamsModel.user, authModel.user);
     initTeams({ container, model: teamsModel, ...integration });
 
 }
 
 function handleGoogleSignInClick({ GoogleAuthProvider, auth, signInWithPopup }) {
+
     const provider = new GoogleAuthProvider();
     signInWithPopup(auth, provider);
+
 }
 
 function handleAuthStateChanged({ onAuthStateChanged, auth }, callback) {
-    onAuthStateChanged(auth, user => {
+
+    onAuthStateChanged(auth, async user => {
 
         if (user) {
             const { displayName, uid, email } = user;
             authModel.user = { displayName, uid, email };
+            try {
+                const accounts = await getDocs(
+                    query(
+                        collection(db, "teams-accounts"),
+                        where(`admins.${uid}`, "!=", null)
+                    )
+                );
+                authModel.user.account = accounts.docs[0]?.id;
+
+            } catch (err) {
+                console.warn(err);
+            }
+
         } else {
             authModel.user = null;
+            authModel.account = null;
         }
         callback();
 
     });
+
 }

@@ -82,7 +82,9 @@ service cloud.firestore {
 
     match /teams-accounts/{accountId} {
       allow read: if request.auth != null
-        && debug(request.auth.uid) in debug(resource.data).admins
+        && resource.data != null
+        && resource.data.admins != null
+        && resource.data.admins[request.auth.uid] != null
     }
 
   }

@@ -1,4 +1,5 @@
 import base from "@playwright/test";
+import { expect } from "@playwright/test";
 export { expect } from "@playwright/test";
 import { readFileSync } from "fs";
 
@@ -12,9 +13,24 @@ export const test = base.extend({
 
         use({
 
-            async loginAsBob() {
+            async loginAsAccountAdmin() {
 
-                await page.goto(new URL("?testuser=Bob", baseURL).href);
+                await page.goto(new URL("?test-login=BobAccountAdmin", baseURL).href);
+                await expect(page.locator("body > nav")).toContainText("Bob Accountadmin");
+
+            },
+
+            async createATeam({ name }) {
+
+                await page.click("a", { hasText: "Create a team" });
+                await page.getByLabel("Team name").fill(name);
+                await page.locator("input[type=submit]", { hasText: "Create" }).click();
+
+            },
+
+            async assertTeamIsListed({ name }) {
+
+                await expect(page.locator(".team", { hasText: name })).toBeVisible();
 
             }
 
