@@ -25,9 +25,12 @@ const nav = document.querySelector("nav");
 const authModel = {};
 const teamsModel = {};
 
-connectAuthEmulator(auth, `http://${location.hostname}:9099`);
-connectFirestoreEmulator(db, location.hostname, 8080);
+if (["localhost", "127.0.0.1"].includes(location.hostname)) {
 
+    connectAuthEmulator(auth, `http://${location.hostname}:9099`);
+    connectFirestoreEmulator(db, location.hostname, 8080);
+
+}
 
 const integration = {
 
