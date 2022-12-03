@@ -1,5 +1,5 @@
 import { assertFails, assertSucceeds } from "@firebase/rules-unit-testing";
-import { createUserPublic, createAccount, makeAccountAdmin, createTeam } from "../../actions/commands";
+import { createUserPublic, createAccount, makeAccountAdmin, createTeam } from "../../actions/commands.js";
 
 export function createTeamsSpec(testEnv) {
 

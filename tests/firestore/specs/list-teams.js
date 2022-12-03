@@ -1,6 +1,5 @@
-import { expect } from "../../../e2e/fixtures";
-import { createAccount, createTeam, createUserPublic } from "../../actions/commands";
-import { listTeams } from "../../actions/queries";
+import { createAccount, createTeam, createUserPublic } from "../../actions/commands.js";
+import { listTeams } from "../../actions/queries.js";
 
 export function listTeamsSpec(testEnv) {
 

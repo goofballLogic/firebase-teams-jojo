@@ -1,7 +1,6 @@
 import { assertFails } from "@firebase/rules-unit-testing";
-import { expect } from "../../../e2e/fixtures";
-import { createAccount, makeAccountAdmin, createUserPublic } from "../../actions/commands";
-import { listAccounts } from "../../actions/queries";
+import { createAccount, makeAccountAdmin, createUserPublic } from "../../actions/commands.js";
+import { listAccounts } from "../../actions/queries.js";
 
 export function accountAdministrationSpec(testEnv) {
 

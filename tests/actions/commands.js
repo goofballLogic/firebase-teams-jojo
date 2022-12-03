@@ -1,5 +1,5 @@
 import { doc, setDoc, deleteField, serverTimestamp } from "firebase/firestore";
-import { collections } from "./collections";
+import { collections } from "./collections.js";
 
 const generateId = (prefix = "test") => `${prefix}_${Math.random().toString().substring(2)}`;
 export async function createTeam(db, { name, account, id = generateId("_team"), members = {} }) {

@@ -1,6 +1,6 @@
-import { createAccount, createTeam, createUserPublic, makeAccountAdmin, reassignTeamToAccount } from "../../actions/commands";
-import { readAccount, readTeam } from "../../actions/queries";
-import { poll } from "./poll";
+import { createAccount, createTeam, createUserPublic, makeAccountAdmin, reassignTeamToAccount } from "../../actions/commands.js";
+import { readAccount } from "../../actions/queries.js";
+import { poll } from "./poll.js";
 
 export function teamSideEffects(testEnv) {
 

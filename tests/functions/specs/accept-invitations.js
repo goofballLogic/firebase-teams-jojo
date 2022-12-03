@@ -1,6 +1,6 @@
-import { acceptInvitation, createAccount, createInvitation, createTeam, createUserPublic } from "../../actions/commands";
-import { readTeam } from "../../actions/queries";
-import { poll } from "./poll";
+import { acceptInvitation, createAccount, createInvitation, createTeam, createUserPublic } from "../../actions/commands.js";
+import { readTeam } from "../../actions/queries.js";
+import { poll } from "./poll.js";
 
 export function acceptInvitations(testEnv) {
 

@@ -1,5 +1,5 @@
 import { doc, getDoc, getDocs, collection, where, query } from "firebase/firestore";
-import { collections } from "./collections";
+import { collections } from "./collections.js";
 
 export async function readUserPrivate(db, { user }) {
 

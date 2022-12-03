@@ -1,6 +1,6 @@
-import { createUserPrivate } from "../../actions/commands";
-import { readUserPublic } from "../../actions/queries";
-import { poll } from "./poll";
+import { createUserPrivate } from "../../actions/commands.js";
+import { readUserPublic } from "../../actions/queries.js";
+import { poll } from "./poll.js";
 
 export function publicUserDocuments(testEnv) {
 
