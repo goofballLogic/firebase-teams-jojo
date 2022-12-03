@@ -10,6 +10,7 @@ import { publicUserDocuments } from "./functions/specs/public-user-documents.js"
 import { acceptInvitations } from "./functions/specs/accept-invitations.js";
 import { accountAdministrationSpec } from "./firestore/specs/account-administration.js";
 import { listTeamsSpec } from "./firestore/specs/list-teams.js";
+import { listMyTeams } from "./functions/specs/list-my-teams.js";
 
 const rulesFile = new URL("../firestore.rules", import.meta.url);
 const firestoreSpec = { rules: readFileSync(rulesFile, "utf8") };
@@ -38,6 +39,7 @@ describe("functions", () => {
     teamSideEffects(testEnv);
     publicUserDocuments(testEnv);
     acceptInvitations(testEnv);
+    listMyTeams(testEnv);
 
 });
 

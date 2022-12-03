@@ -41,7 +41,6 @@ async function findPublicUserRecord(testEnv, user) {
 
         const db = context.firestore();
         const publicUser = await readUserPublic(db, { user });
-        console.log(publicUser.exists(), publicUser.data());
         if (publicUser.exists()) found = publicUser.data();
 
     });
