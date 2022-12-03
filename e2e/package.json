@@ -6,7 +6,8 @@
     "test:emulators": "firebase emulators:start --import saved-data",
     "test:emulators-export-on-exit": "firebase emulators:start --import saved-data --export-on-exit  saved-data",
     "dev:watch": "nodemon --watch . --exec \"playwright test --project chromium\"",
-    "dev:test": "playwright test --project chromium"
+    "dev:test": "playwright test --project chromium",
+    "test:ci": "firebase emulators:exec  --import saved-data --only firestore,functions,hosting,auth \"npx playwright test\""
   },
   "type": "module",
   "private": true,
