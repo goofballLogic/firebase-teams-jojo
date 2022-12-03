@@ -123,8 +123,7 @@ async function getTeamsForUserInAccount({ user, account, query, teams, accounts,
         return await getDocs(
             query(
                 teams,
-                where(`members.${user.uid}`, "!=", null),
-                where(`account`, "==", accountRef)
+                where(`members.${user.uid}`, "!=", null)
             )
         );
     } catch (err) {

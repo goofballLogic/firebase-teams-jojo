@@ -23,11 +23,7 @@ service cloud.firestore {
         && (request.auth.uid in team.data.admins)
         || (team.data.account != null && canAdministerAccountDoc(get(team.data.account)));
     }
-    function isTeamMemberDoc() {
-      return resource != null
-        && debug(resource).data.members
-        && (request.auth.uid in team.data.members);
-    }
+
     function isMemberSelfRemove() {
       return isOnlyMembersAffected(request.resource.data.diff(resource.data))
         && isMemberSelfRemoveDiff(request.resource.data.members.diff(resource.data.members))
