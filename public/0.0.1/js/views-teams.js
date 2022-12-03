@@ -20,7 +20,7 @@ export function main(model) {
 
 function home(model) {
 
-    const teams = model.teams || [];
+    const teams = model.user?.accountTeams || [];
     return `<article>
 
         <ul>
@@ -28,6 +28,12 @@ function home(model) {
         </ul>
 
     </article>`;
+
+}
+
+function team(model) {
+
+    return `<li class="team">${model.data?.name}</li>`;
 
 }
 

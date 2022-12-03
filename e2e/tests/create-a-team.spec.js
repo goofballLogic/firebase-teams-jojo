@@ -13,15 +13,17 @@ describe("Create a team", async () => {
 
     describe("When I create a team", () => {
 
+      let name;
       beforeEach(async ({ app }) => {
 
-        await app.createATeam({ name: "Team 1" });
+        name = `Team 1 ${Date.now()}-${Math.random().toString().substring(2)}`;
+        await app.createATeam({ name });
 
       });
 
       test("Then the team is shown in my list of teams", async ({ app }) => {
 
-        await app.assertTeamIsListed("Team 1");
+        await app.assertTeamIsListed({ name });
 
       });
 

@@ -35,11 +35,15 @@ const integration = {
     getDoc,
     setDoc,
     deleteField,
+    getDocs,
+    query,
+    where,
 
     users: collection(db, "teams-users"),
     teams: collection(db, "teams-teams"),
     invites: collection(db, "teams-invites"),
     usersPublic: collection(db, "teams-users-public"),
+    accounts: collection(db, "teams-accounts")
 
 };
 
@@ -66,8 +70,12 @@ function render() {
         () => signOut(auth)
     );
     const container = document.querySelector("main");
-    if (!teamsModel.user) teamsModel.user = {};
-    Object.assign(teamsModel.user, authModel.user);
+    if (!authModel.user) {
+        teamsModel.user = null;
+    } else {
+        if (!teamsModel.user) teamsModel.user = {};
+        Object.assign(teamsModel.user, authModel.user);
+    }
     initTeams({ container, model: teamsModel, ...integration });
 
 }
@@ -86,25 +94,27 @@ function handleAuthStateChanged({ onAuthStateChanged, auth }, callback) {
         if (user) {
             const { displayName, uid, email } = user;
             authModel.user = { displayName, uid, email };
-            try {
-                const accounts = await getDocs(
-                    query(
-                        collection(db, "teams-accounts"),
-                        where(`admins.${uid}`, "!=", null)
-                    )
-                );
-                authModel.user.account = accounts.docs[0]?.id;
-
-            } catch (err) {
-                console.warn(err);
-            }
-
+            authModel.user.account = await accountForUser(uid);
         } else {
             authModel.user = null;
-            authModel.account = null;
         }
         callback();
 
     });
 
 }
+
+async function accountForUser(uid) {
+    try {
+        const accounts = await getDocs(
+            query(
+                collection(db, "teams-accounts"),
+                where(`members.${uid}`, "!=", null)
+            )
+        );
+        return accounts.docs[0]?.id;
+    } catch (err) {
+        console.warn("[AFU-1]", { uid }, err);
+    }
+}
+

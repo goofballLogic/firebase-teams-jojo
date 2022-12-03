@@ -22,6 +22,7 @@ export const test = base.extend({
 
             async createATeam({ name }) {
 
+                page.on("pageerror", console.log.bind(console));
                 await page.click("a", { hasText: "Create a team" });
                 await page.getByLabel("Team name").fill(name);
                 await page.locator("input[type=submit]", { hasText: "Create" }).click();
@@ -30,7 +31,7 @@ export const test = base.extend({
 
             async assertTeamIsListed({ name }) {
 
-                await expect(page.locator(".team", { hasText: name })).toBeVisible();
+                await expect(page.locator("li").getByText(name)).toBeVisible();
 
             }
 

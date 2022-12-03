@@ -14,23 +14,18 @@ service cloud.firestore {
     }
     function canAdministerAccountDoc(account) {
       return account != null
-        && "admins" in debug(account.data)
+        && account.data.admins != null
         && request.auth.uid in account.data.admins;
     }
 
-    function canAdministerTeam(teamId) {
-      return canAdministerTeamDoc(get(/databases/$(database)/documents/teams-teams/$(teamId)));
-    }
     function canAdministerTeamDoc(team) {
       return team != null
         && (request.auth.uid in team.data.admins)
         || (team.data.account != null && canAdministerAccountDoc(get(team.data.account)));
     }
-    function isTeamMember(teamId) {
-      return isTeamMemberDoc(get(/databases/$(database)/documents/teams-teams/$(teamId)));
-    }
-    function isTeamMemberDoc(team) {
-      return team != null
+    function isTeamMemberDoc() {
+      return resource != null
+        && debug(resource).data.members
         && (request.auth.uid in team.data.members);
     }
     function isMemberSelfRemove() {
@@ -75,16 +70,15 @@ service cloud.firestore {
     }
 
     match /teams-teams/{teamId} {
-        allow read: if request.auth != null && isTeamMemberDoc(resource);
+        allow read: if request.auth != null && request.auth.uid in resource.data.members
         allow create: if request.auth != null && canAccountCreateTeams();
-        allow update, delete: if request.auth != null && (canAdministerTeam(teamId) || isMemberSelfRemove());
+        allow update, delete: if request.auth != null && canAdministerTeamDoc(resource);
+        allow update: if request.auth != null && isMemberSelfRemove()
     }
 
     match /teams-accounts/{accountId} {
-      allow read: if request.auth != null
-        && resource.data != null
-        && resource.data.admins != null
-        && resource.data.admins[request.auth.uid] != null
+      allow read: if request.auth != null && resource.data.members[request.auth.uid] != null
+      allow read: if request.auth != null && resource.data.admins[request.auth.uid] != null
     }
 
   }
