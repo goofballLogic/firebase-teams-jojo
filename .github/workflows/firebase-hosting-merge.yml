@@ -21,7 +21,7 @@ jobs:
         run: npm install -g firebase-tools
 
       - name: run tests
-        run: cd tests; npm test
+        run: ls tests; npm test
         working-directory: tests
 
 
