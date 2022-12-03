@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "scripts": {
-    "test": "firebase emulators:exec --only firestore,functions \"node --experimental-vm-modules node_modules/jest/bin/jest.js \"",
+    "test": "firebase emulators:exec --only firestore,functions \"node --experimental-vm-modules node_modules/jest/bin/jest.js .\"",
     "test:watch": "firebase emulators:exec --only firestore,functions \"node --experimental-vm-modules node_modules/jest/bin/jest.js --watch --verbose\"",
     "test:noemu": "GCLOUD_PROJECT=firebase-teams-jojo FIRESTORE_HOST=localhost FIRESTORE_PORT=8080 node --experimental-vm-modules node_modules/jest/bin/jest.js --watch"
   },
