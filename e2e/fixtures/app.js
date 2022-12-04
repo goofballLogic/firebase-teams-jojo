@@ -59,5 +59,7 @@ export function app({ page }, use) {
             await expect(page.locator("li").getByText(name)).toBeVisible();
 
         }
+
     });
+
 }
