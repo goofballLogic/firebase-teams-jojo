@@ -45,6 +45,24 @@ describe("Given super admin", () => {
 
         });
 
+        describe("And I rename the team", () => {
+
+            let newTeamName = `Team ${Math.random()}`;
+            beforeEach(async ({ lib }) => {
+
+                await lib.renameTeam({ id: teamId, name: newTeamName });
+
+            });
+
+            test("Get team should reflect the new name", async ({ lib }) => {
+
+                const team = await lib.getTeam({ id: teamId });
+                expect(team.name).toEqual(newTeamName);
+
+            });
+
+        })
+
     });
 
 

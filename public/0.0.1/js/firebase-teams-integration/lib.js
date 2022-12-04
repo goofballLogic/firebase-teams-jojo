@@ -3,7 +3,7 @@ import { generateName } from "./nouns.js";
 function nonce() {
     return Date.now().toString() + Math.random().toString().substring(1).replace(".", "-");
 }
-export function getTeams({ user, getDocs, setDoc, doc, deleteDoc, collections: { teams, accounts } }) {
+export function getTeams({ user, getDoc, getDocs, setDoc, doc, deleteDoc, collections: { teams, accounts } }) {
 
     return {
 
@@ -23,7 +23,20 @@ export function getTeams({ user, getDocs, setDoc, doc, deleteDoc, collections: {
 
         },
 
-        inviteUser() {
+        async renameTeam({ id, name }) {
+
+            if (!id) throw new Error("No id specified [FGT-10]");
+            const teamRef = doc(teams, id);
+            await setDoc(teamRef, { name }, { merge: true });
+
+        },
+
+        async getTeam({ id }) {
+
+            if (!id) throw new Error("No id specified [FGT-10]");
+            const teamRef = doc(teams, id);
+            const snap = await getDoc(teamRef);
+            return snap.data();
 
         },
 

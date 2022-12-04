@@ -25,7 +25,18 @@ export async function lib({ page }, use) {
             // otherwise evaluate it in the context of our (test) page
             return arg => page.evaluate(
 
-                async ({ prop, arg }) => await window.__ftj[prop](arg),
+                async ({ prop, arg }) => {
+
+                    try {
+
+                        return await window.__ftj[prop](arg);
+
+                    } catch (err) {
+
+                        throw new Error(`${prop}: ${err}`);
+
+                    }
+                },
                 { prop, arg }
 
             );
