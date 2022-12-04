@@ -3,7 +3,7 @@ Simple teams and entitlements in Firebase
 
 ## Features
 
-- [ ] Create team
+- [x] Create team
 - [ ] Delete team
 - [ ] Rename team
 - [ ] View team members

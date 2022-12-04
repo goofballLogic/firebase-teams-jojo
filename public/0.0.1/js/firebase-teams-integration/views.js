@@ -9,10 +9,10 @@ export function main(model) {
 
     return `
 
-        ${nav(model)}
-        ${model.mode !== MODE_CREATE_TEAM ? "" : createTeam(model)}
+        ${nav()}
+        ${model.mode !== MODE_CREATE_TEAM ? "" : createTeam()}
         ${model.mode !== MODE_HOME ? "" : home(model)}
-        ${JSON.stringify(model)}
+        <pre>${JSON.stringify(model, (key, value) => ["firestore", "_key"].includes(key) ? "..." : value, 3)}</pre>
 
     `;
 
@@ -31,13 +31,16 @@ function home(model) {
 
 }
 
-function team(model) {
+function team(teamRecord) {
 
-    return `<li class="team">${model.data?.name}</li>`;
+
+    return `<li class="team">
+        ${teamRecord.data?.name}
+    </li>`;
 
 }
 
-function createTeam(model) {
+function createTeam() {
 
     return `<form class="${CLASS_CREATE_TEAM}">
 
@@ -51,7 +54,7 @@ function createTeam(model) {
 
 }
 
-function nav(model) {
+function nav() {
 
     const url = new URL(location.href);
     url.searchParams.set(MODE_KEY, MODE_CREATE_TEAM);

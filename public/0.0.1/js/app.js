@@ -2,12 +2,14 @@ import { initializeApp }
     from "https://www.gstatic.com/firebasejs/9.14.0/firebase-app.js";
 import { signInWithEmailAndPassword, getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, connectAuthEmulator }
     from "https://www.gstatic.com/firebasejs/9.14.0/firebase-auth.js";
-import { getFirestore, collection, doc, getDoc, setDoc, connectFirestoreEmulator, deleteField, where, query, getDocs }
+import { getFirestore, collection, doc, getDoc, setDoc, deleteDoc, connectFirestoreEmulator, deleteField, where, query, getDocs }
     from "https://www.gstatic.com/firebasejs/9.14.0/firebase-firestore.js";
 import { initTeams }
-    from "./teams.js";
+    from "./firebase-teams-integration/teams.js";
+import { getTeams }
+    from "./firebase-teams-integration/lib.js";
 import { renderNav }
-    from "./views-main.js";
+    from "./views.js";
 
 const app = initializeApp({
     apiKey: "AIzaSyCMcpGSofrm7Y1asK73iBoqfmFbn8uqiVA",
@@ -25,7 +27,8 @@ const nav = document.querySelector("nav");
 const authModel = {};
 const teamsModel = {};
 
-if (["localhost", "127.0.0.1"].includes(location.hostname)) {
+const isTest = ["localhost", "127.0.0.1"].includes(location.hostname);
+if (isTest) {
 
     connectAuthEmulator(auth, `http://${location.hostname}:9099`);
     connectFirestoreEmulator(db, location.hostname, 8080);
@@ -38,15 +41,18 @@ const integration = {
     getDoc,
     setDoc,
     deleteField,
+    deleteDoc,
     getDocs,
     query,
     where,
 
-    users: collection(db, "teams-users"),
-    teams: collection(db, "teams-teams"),
-    invites: collection(db, "teams-invites"),
-    usersPublic: collection(db, "teams-users-public"),
-    accounts: collection(db, "teams-accounts")
+    collections: {
+        users: collection(db, "teams-users"),
+        teams: collection(db, "teams-teams"),
+        invites: collection(db, "teams-invites"),
+        usersPublic: collection(db, "teams-users-public"),
+        accounts: collection(db, "teams-accounts")
+    }
 
 };
 
@@ -57,6 +63,8 @@ const url = new URL(location.href);
 const testLogin = url.searchParams.get("test-login");
 if (testLogin === "BobAccountAdmin") {
     signInWithEmailAndPassword(auth, "bob.accountadmin@gmail.com", "Password1!");
+} else if (testLogin === "SueSuperAdmin") {
+    signInWithEmailAndPassword(auth, "sue.superadmin@gmail.com", "Password1!");
 } else if (testLogin === "SallyNewUser") {
     signInWithEmailAndPassword(auth, "sally.newuser@gmail.com", "Password1!");
 }
@@ -79,7 +87,9 @@ function render() {
         if (!teamsModel.user) teamsModel.user = {};
         Object.assign(teamsModel.user, authModel.user);
     }
-    initTeams({ container, model: teamsModel, ...integration });
+    const teams = getTeams({ user: teamsModel.user, ...integration });
+    if (isTest) window.__ftj = teams;
+    initTeams({ container, model: teamsModel, teams, ...integration });
 
 }
 
@@ -91,6 +101,7 @@ function handleGoogleSignInClick({ GoogleAuthProvider, auth, signInWithPopup }) 
 }
 
 function handleAuthStateChanged({ onAuthStateChanged, auth }, callback) {
+
 
     onAuthStateChanged(auth, async user => {
 
@@ -115,7 +126,7 @@ async function accountForUser(uid) {
                 where(`members.${uid}`, "!=", null)
             )
         );
-        return accounts.docs[0]?.id;
+        return accounts.docs[0]?.id || uid;
     } catch (err) {
         console.warn("[AFU-1]", { uid }, err);
     }

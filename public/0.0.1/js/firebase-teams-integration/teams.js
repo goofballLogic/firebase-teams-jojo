@@ -1,8 +1,10 @@
-import { main } from "./views-teams.js";
+import { main } from "./views.js";
 import { CLASS_CREATE_TEAM, MODE_KEY } from "./taxonomy.js";
 import { generateName } from "./nouns.js";
+import { getAccountData, getTeamsForUserInAccount } from "./queries.js";
+import { fetchingOp, poll } from "./async.js";
 
-export function initTeams({
+export async function initTeams({
     container,
     model,
 
@@ -14,11 +16,13 @@ export function initTeams({
     query,
     where,
 
-    users,
-    teams,
-    invites,
-    usersPublic,
-    accounts
+    collections: {
+        users,
+        teams,
+        invites,
+        usersPublic,
+        accounts
+    }
 
 }) {
 
@@ -34,13 +38,16 @@ export function initTeams({
         query,
         where,
 
-        users,
-        teams,
-        invites,
-        usersPublic,
-        accounts
+        collections: {
+            users,
+            teams,
+            invites,
+            usersPublic,
+            accounts
+        }
     };
 
+    //await ensureUserData();
     render();
 
     async function render() {
@@ -61,16 +68,15 @@ export function initTeams({
     }
 
     async function updateModelForMode() {
-
+        return;
         if (model.user) {
             const { account } = userAndAccount();
-
             try {
-                const docs = await getTeamsForUserInAccount({ user: model.user, account, ...integration });
-                model.user.accountTeams = docs.docs.map(d => ({
-                    id: d.id,
-                    data: d.data()
-                }));
+
+                model.user.accountTeams = await fetchingOp(
+                    getTeamsForUserInAccount({ user: model.user, account, ...integration })
+                );
+
             } catch (err) {
                 console.warn("[UMFM-1]", { account }, err);
             }
@@ -94,6 +100,26 @@ export function initTeams({
         return { account, uid };
     }
 
+
+    // async function ensureUserData() {
+
+    //     if (model.user) {
+
+    //         if (model.user.account && !model.user.accountData) {
+
+    //             model.user.accountData = await fetchingOp(
+    //                 getAccountData({ accountId: model.user.account, ...integration }),
+    //                 "Fetching account data"
+    //             );
+    //             model.user.isAccountAdmin = model.user.uid in model.user.accountData?.admins;
+    //             model.user.teamAdmin =
+
+    //         }
+
+    //     }
+
+    // }
+
     async function handleCreateTeam(e) {
         e.preventDefault();
 
@@ -104,31 +130,31 @@ export function initTeams({
         const name = formData.get("name");
         if (!name) throw new Error("Name not specified [HCT-20]");
 
-        const ref = doc(teams, generateName(Date.now()));
+        const teamRef = doc(teams, generateName(Date.now()));
         const accountRef = doc(accounts, account);
         const userRef = doc(users, uid);
-        await setDoc(ref, { name, account: accountRef, members: { [uid]: userRef } });
+        await setDoc(teamRef, { name, account: accountRef, members: { [uid]: userRef } });
+        const userRecordUpdated = await poll(async () => {
+
+            const ss = await getDoc(userRef);
+            const userTeams = ss.data()?.teams;
+            return userTeams && teamRef.id in userTeams;
+
+        });
+
+        if (!userRecordUpdated) {
+            throw new Error("User record not updated [HCT-30]");
+        }
+
         const url = new URL(location.href);
         url.searchParams.delete(MODE_KEY);
         history.pushState(null, "", url.href);
+
         render();
 
     }
 
 }
-async function getTeamsForUserInAccount({ user, account, query, teams, accounts, where, doc, getDocs }) {
 
-    try {
-        const accountRef = doc(accounts, account);
-        return await getDocs(
-            query(
-                teams,
-                where(`members.${user.uid}`, "!=", null)
-            )
-        );
-    } catch (err) {
-        throw new Error(`GTFA-1: account: ${account} ${err}`);
-    }
 
-}
 

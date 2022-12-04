@@ -25,7 +25,7 @@ exports.handleTeamsWrite = async function handleTeamsWrite({
     logger
 }) {
 
-    const teamId = change.after?.id;
+    const teamId = change.before?.id || change.after?.id;
     const beforeAccount = change.before?.data()?.account;
     const afterAccount = change.after?.data()?.account;
     if (beforeAccount?.path !== afterAccount?.path) {
@@ -46,7 +46,30 @@ exports.handleTeamsWrite = async function handleTeamsWrite({
         }
 
     }
-
+    const beforeMembers = change.before?.data()?.members;
+    const afterMembers = change.after?.data()?.members;
+    if (beforeMembers) {
+        const removedMembers = Object.entries(beforeMembers)
+            .filter(([id]) => !(afterMembers && (id in afterMembers)))
+            .map(([, ref]) => ref);
+        for (const removedMember of removedMembers) {
+            await removedMember.set(
+                { teams: { [teamId]: deleteField } },
+                { merge: true }
+            );
+        }
+    }
+    if (afterMembers) {
+        const addedMembers = Object.entries(afterMembers)
+            .filter(([id]) => !(beforeMembers && (id in beforeMembers)))
+            .map(([, ref]) => ref);
+        for (const addedMember of addedMembers) {
+            await addedMember.set(
+                { teams: { [teamId]: teams.doc(teamId) } },
+                { merge: true }
+            );
+        }
+    }
 }
 
 exports.handleUsersWrite = async function handleUsersWrite({
