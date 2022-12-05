@@ -26,15 +26,6 @@ const auth = getAuth(app);
 const nav = document.querySelector("nav");
 const authModel = {};
 const teamsModel = {};
-
-const isTest = ["localhost", "127.0.0.1"].includes(location.hostname);
-if (isTest) {
-
-    connectAuthEmulator(auth, `http://${location.hostname}:9099`);
-    connectFirestoreEmulator(db, location.hostname, 8080);
-
-}
-
 const integration = {
 
     doc,
@@ -57,17 +48,27 @@ const integration = {
 
 };
 
+const isTest = ["localhost", "127.0.0.1"].includes(location.hostname);
+if (isTest) {
+
+    connectAuthEmulator(auth, `http://${location.hostname}:9099`);
+    connectFirestoreEmulator(db, location.hostname, 8080);
+
+}
+
 handleAuthStateChanged({ onAuthStateChanged, auth }, render);
 render();
 
-const url = new URL(location.href);
-const testLogin = url.searchParams.get("test-login");
-if (testLogin === "BobAccountAdmin") {
-    signInWithEmailAndPassword(auth, "bob.accountadmin@gmail.com", "Password1!");
-} else if (testLogin === "SueSuperAdmin") {
-    signInWithEmailAndPassword(auth, "sue.superadmin@gmail.com", "Password1!");
-} else if (testLogin === "SallyNewUser") {
-    signInWithEmailAndPassword(auth, "sally.newuser@gmail.com", "Password1!");
+if (isTest) {
+
+    const url = new URL(location.href);
+    const testLogin = url.searchParams.get("test-login");
+    if (testLogin) {
+
+        signInWithEmailAndPassword(auth, testLogin, "Password1!");
+
+    }
+
 }
 
 function render() {
@@ -107,11 +108,17 @@ function handleAuthStateChanged({ onAuthStateChanged, auth }, callback) {
     onAuthStateChanged(auth, async user => {
 
         if (user) {
+
             const { displayName, uid, email } = user;
             authModel.user = { displayName, uid, email };
             authModel.user.account = await accountForUser(uid);
+            const claims = (await user.getIdTokenResult()).claims;
+            authModel.user.superAdmin = !!claims.superAdmin;
+
         } else {
+
             authModel.user = null;
+
         }
         callback();
 

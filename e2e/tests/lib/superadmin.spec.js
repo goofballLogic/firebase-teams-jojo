@@ -1,36 +1,47 @@
 import { test, expect } from "../../fixtures/index.js";
-import { JOE_OLDUSER, SALLY_NEWUSER, SUPER_ADMIN } from "./wellknown.js";
-const { describe, beforeEach, afterEach } = test;
+const { describe, beforeEach } = test;
 
 describe("Given super admin", () => {
 
-    beforeEach(async ({ app }) => {
+    let adminId, accountId, otherUserId, otherMutableUserId;
+    beforeEach(async ({ app, page, setup }) => {
 
-        await app.loginAsSuperAdmin();
+        const admin = await setup.createSuperAdmin();
+        await app.loginWithEmail(admin.email);
+        adminId = admin.uid;
+        printPageConsoleMessages(page);
+        accountId = await setup.createAccount();
+        otherUserId = await setup.createUser({ accountId });
+        otherMutableUserId = await setup.createUser({ accountId });
 
     });
 
-    test("Then I can fetch my user record", async ({ lib }) => {
+    test("I can fetch my entitlements", async ({ lib }) => {
+
+        const entitlements = await lib.getEntitlements();
+        expect(entitlements.createAccount).toEqual(true);
+        expect(entitlements.createTeam).toEqual(true);
+        expect(entitlements.userAdmin).toEqual(true);
+
+    });
+
+    test("I can fetch my user record", async ({ lib }) => {
 
         const record = await lib.getMyUserRecord();
-        expect(record.data.name).toEqual("Sue Superadmin");
+        expect(record.data?.name).not.toBeFalsy();
 
     });
 
-    test("Then I can fetch another user's user record", async ({ lib }) => {
+    test("I can fetch another user's user record", async ({ lib }) => {
 
-        const record = await lib.getUserRecord({ id: JOE_OLDUSER.id });
-        expect(record.data.name).toEqual("Joe Olduser");
+        const record = await lib.getUserRecord({ id: otherUserId });
+        expect(record.data.name).toEqual(`User ${otherUserId}`);
 
     });
 
     test("I can update my user record", async ({ lib }) => {
 
-
-        const original = await lib.getMyUserRecord();
         await lib.updateMyUserRecord({ name: "Peppa Pig", email: "peppa@whitehouse.gov" });
-        lib.teardown(() => lib.updateMyUserRecord({ name: original.data.name, email: original.data.email }));
-
         const updated = await lib.getMyUserRecord();
         expect(updated.data).toMatchObject({ name: "Peppa Pig", email: "peppa@whitehouse.gov" });
 
@@ -38,13 +49,9 @@ describe("Given super admin", () => {
 
     test("I can update another user's record", async ({ lib }) => {
 
-        const { id } = JOE_OLDUSER;
-        const original = await lib.getUserRecord({ id });
-        await lib.updateUserRecord({ id, name: "Barbara" });
-        lib.teardown(() => lib.updateUserRecord({ id, name: original.data.name }));
-
-        const updated = await lib.getUserRecord({ id });
-        expect(updated.data).toMatchObject({ name: "Barbara", email: "joe.olduser@gmail.com" });
+        await lib.updateUserRecord({ id: otherMutableUserId, name: "Barbara" });
+        const updated = await lib.getUserRecord({ id: otherMutableUserId });
+        expect(updated.data).toMatchObject({ name: "Barbara", email: `user.${otherMutableUserId}@example.com` });
 
     });
 
@@ -66,7 +73,7 @@ describe("Given super admin", () => {
 
         });
 
-        test("Get account should return account", async ({ lib }) => {
+        test("I can get the account", async ({ lib }) => {
 
             const account = await lib.getAccount({ id: accountId });
             expect(account).toMatchObject({ id: accountId, data: { name: accountName } });
@@ -94,63 +101,37 @@ describe("Given super admin", () => {
 
         });
 
-        test("Listed teams should include created team", async ({ lib }) => {
+        test("I can list the teams including the new one", async ({ lib }) => {
 
             const teams = await lib.listTeams();
             expect(teams.map(t => t.id)).toContain(teamId);
 
         });
 
-        describe("And I delete the team", () => {
+        test("Then I can delete the team", async ({ lib }) => {
 
-            beforeEach(async ({ lib }) => {
-
-                await lib.deleteTeam({ id: teamId });
-
-            });
-
-            test("Listed teams should not include the team", async ({ lib }) => {
-
-                const teams = await lib.listTeams();
-                expect(teams.map(t => t.id)).not.toContain(teamId);
-
-            });
+            await lib.deleteTeam({ id: teamId });
+            const teams = await lib.listTeams();
+            expect(teams.map(t => t.id)).not.toContain(teamId);
 
         });
 
-        describe("And I rename the team", () => {
+        test("I can rename the team", async ({ lib }) => {
 
             let newTeamName = `Team ${Math.random()}`;
-            beforeEach(async ({ lib }) => {
-
-                await lib.renameTeam({ id: teamId, name: newTeamName });
-
-            });
-
-            test("Get team should reflect the new name", async ({ lib }) => {
-
-                const team = await lib.getTeam({ id: teamId });
-                expect(team.data.name).toEqual(newTeamName);
-
-            });
+            await lib.renameTeam({ id: teamId, name: newTeamName });
+            const team = await lib.getTeam({ id: teamId });
+            expect(team.data.name).toEqual(newTeamName);
 
         });
 
-        describe("And I add a team member", () => {
+        test("I can add a team member", async ({ lib }) => {
 
-            beforeEach(async ({ lib }) => {
+            await lib.addTeamMember({ id: teamId, userId: otherUserId });
 
-                await lib.addTeamMember({ id: teamId, userId: JOE_OLDUSER.id });
-
-            });
-
-            test("Get team members should reflect the added member", async ({ lib }) => {
-
-                const members = await lib.getTeamMembers({ id: teamId });
-                expect(members.map(m => m.id)).toEqual([JOE_OLDUSER.id]);
-                expect(members.map(m => m.data.name)).toEqual(["Joe Olduser"]);
-
-            });
+            const members = await lib.getTeamMembers({ id: teamId });
+            expect(members.map(m => m.id)).toEqual([otherUserId]);
+            expect(members.map(m => m.data.name)).toEqual([`User ${otherUserId}`]);
 
         });
 
@@ -161,52 +142,52 @@ describe("Given super admin", () => {
 
                 inviteId = await lib.inviteTeamMember({
                     teamId: teamId,
-                    email: SALLY_NEWUSER.email,
-                    name: "Sally"
+                    email: "bright.eyes@example.com",
+                    name: "Bright Eyes"
                 });
 
             });
 
-            test("Get invite should return the invite", async ({ lib }) => {
+            test("I can get the invite", async ({ lib }) => {
 
                 const invite = await lib.getInvite({ id: inviteId });
                 expect(refPathFromJSON(invite.data.from))
-                    .toMatch(new RegExp(`/teams-users-public/${SUPER_ADMIN.id}$`));
+                    .toMatch(new RegExp(`/teams-users-public/${adminId}$`));
                 expect(refPathFromJSON(invite.data.team))
                     .toMatch(new RegExp(`/teams-teams/${teamId}`));
 
             });
 
-            describe("And I try to accept the invitation myself", () => {
+            test("I can't accept the invitation myself", (async ({ lib }) => {
 
-                let caught;
-                beforeEach(async ({ lib }) => {
+                try {
 
-                    try {
+                    await lib.acceptInvitation({ id: inviteId });
+                    throw new Error("Expected an error");
 
-                        await lib.acceptInvitation({ id: inviteId });
+                } catch (err) {
 
-                    } catch (err) {
+                    expect(err.message).toMatch("PERMISSION_DENIED");
 
-                        caught = err;
+                }
 
-                    }
-
-                });
-
-                test("The attempt fails", () => {
-
-                    expect(caught?.message).toMatch("PERMISSION_DENIED");
-
-                });
-
-            });
+            }));
 
         });
 
     });
 
 });
+
+function printPageConsoleMessages(page) {
+
+    const blackListMessages = ["Auth Emulator"];
+    page.on("console", message => {
+        if (!blackListMessages.some(x => message.text().indexOf(x)))
+            console.log(message);
+    });
+
+}
 
 function refPathFromJSON(ref) {
 

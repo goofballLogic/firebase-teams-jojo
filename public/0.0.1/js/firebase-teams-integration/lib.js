@@ -7,6 +7,17 @@ export function getTeams({ user, getDoc, getDocs, setDoc, doc, deleteDoc, server
 
     return {
 
+        async getEntitlements() {
+
+            const isSuperAdmin = user?.superAdmin;
+            return {
+                createAccount: isSuperAdmin,
+                createTeam: isSuperAdmin,
+                userAdmin: isSuperAdmin
+            };
+
+        },
+
         // TEAM CRD
         async createTeam({ name }) {
 

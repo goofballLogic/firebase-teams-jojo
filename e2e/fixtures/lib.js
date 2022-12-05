@@ -2,8 +2,6 @@ import { expect } from "@playwright/test";
 
 export async function lib({ page }, use) {
 
-    page.on("console", console.log.bind(console))
-
     const teardowns = [];
 
     const local = {
