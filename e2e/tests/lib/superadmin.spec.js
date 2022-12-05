@@ -1,5 +1,4 @@
 import { test, expect } from "../../fixtures/index.js";
-import { lib } from "../../fixtures/lib.js";
 import { JOE_OLDUSER, SALLY_NEWUSER, SUPER_ADMIN } from "./wellknown.js";
 const { describe, beforeEach, afterEach } = test;
 
@@ -25,22 +24,27 @@ describe("Given super admin", () => {
 
     });
 
-    describe("When I can update my user record", () => {
+    test("I can update my user record", async ({ lib }) => {
 
-        beforeEach(async ({ lib }) => {
 
-            const original = await lib.getMyUserRecord();
-            await lib.updateMyUserRecord({ name: "Peppa Pig", email: "peppa@whitehouse.gov" });
-            lib.teardown(() => lib.updateMyUserRecord({ name: original.data.name, email: original.data.email }));
+        const original = await lib.getMyUserRecord();
+        await lib.updateMyUserRecord({ name: "Peppa Pig", email: "peppa@whitehouse.gov" });
+        lib.teardown(() => lib.updateMyUserRecord({ name: original.data.name, email: original.data.email }));
 
-        });
+        const updated = await lib.getMyUserRecord();
+        expect(updated.data).toMatchObject({ name: "Peppa Pig", email: "peppa@whitehouse.gov" });
 
-        test("The record is updated", async ({ lib }) => {
+    });
 
-            const record = await lib.getMyUserRecord();
-            expect(record.data).toMatchObject({ name: "Peppa Pig", email: "peppa@whitehouse.gov" });
+    test("I can update another user's record", async ({ lib }) => {
 
-        });
+        const { id } = JOE_OLDUSER;
+        const original = await lib.getUserRecord({ id });
+        await lib.updateUserRecord({ id, name: "Barbara" });
+        lib.teardown(() => lib.updateUserRecord({ id, name: original.data.name }));
+
+        const updated = await lib.getUserRecord({ id });
+        expect(updated.data).toMatchObject({ name: "Barbara", email: "joe.olduser@gmail.com" });
 
     });
 
@@ -69,20 +73,11 @@ describe("Given super admin", () => {
 
         });
 
-        describe("And I delete it again", () => {
+        test("I can delete it again", async ({ lib }) => {
 
-            beforeEach(async ({ lib }) => {
-
-                await lib.deleteAccount({ id: accountId });
-
-            });
-
-            test("Get account should return null", async ({ lib }) => {
-
-                const account = await lib.getAccount({ id: accountId });
-                expect(account.data).toEqual(undefined);
-
-            });
+            await lib.deleteAccount({ id: accountId });
+            const account = await lib.getAccount({ id: accountId });
+            expect(account.data).toEqual(undefined);
 
         });
 
@@ -211,9 +206,11 @@ describe("Given super admin", () => {
 
     });
 
-
 });
+
 function refPathFromJSON(ref) {
+
     return ref._key.path.segments.join("/");
+
 }
 
