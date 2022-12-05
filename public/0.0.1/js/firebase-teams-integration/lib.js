@@ -90,6 +90,17 @@ export function getTeams({ user, getDoc, getDocs, setDoc, doc, deleteDoc, server
 
         },
 
+        // USER update
+        async updateMyUserRecord({ name, email }) {
+
+            if (!(name || email)) return;
+            const patch = {};
+            if (name) patch.name = name;
+            if (email) patch.email = email;
+            await patchById({ collection: users, id: user.uid, code: "FUMUR-10", patch });
+
+        },
+
         // ACCOUNT crud
         async createAccount({ name }) {
 

@@ -1,4 +1,5 @@
 import { test, expect } from "../../fixtures/index.js";
+import { lib } from "../../fixtures/lib.js";
 import { JOE_OLDUSER, SALLY_NEWUSER, SUPER_ADMIN } from "./wellknown.js";
 const { describe, beforeEach, afterEach } = test;
 
@@ -21,6 +22,25 @@ describe("Given super admin", () => {
 
         const record = await lib.getUserRecord({ id: JOE_OLDUSER.id });
         expect(record.data.name).toEqual("Joe Olduser");
+
+    });
+
+    describe("When I can update my user record", () => {
+
+        beforeEach(async ({ lib }) => {
+
+            const original = await lib.getMyUserRecord();
+            await lib.updateMyUserRecord({ name: "Peppa Pig", email: "peppa@whitehouse.gov" });
+            lib.teardown(() => lib.updateMyUserRecord({ name: original.data.name, email: original.data.email }));
+
+        });
+
+        test("The record is updated", async ({ lib }) => {
+
+            const record = await lib.getMyUserRecord();
+            expect(record.data).toMatchObject({ name: "Peppa Pig", email: "peppa@whitehouse.gov" });
+
+        });
 
     });
 
