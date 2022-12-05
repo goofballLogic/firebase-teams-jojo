@@ -1,17 +1,23 @@
 import { test, expect } from "../../fixtures/index.js";
+import { printPageConsoleMessages } from "./printPageConsoleMessages.js";
+import { refPathFromJSON } from "./refPathFromJSON.js";
 const { describe, beforeEach } = test;
 
 describe("SUPER ADMIN", () => {
 
-    let adminId;
+    let adminId, adminEmail, accountId;
     beforeEach(async ({ app, context, setup }) => {
 
         const admin = await setup.createSuperAdmin();
-        await app.loginWithEmail(admin.email);
+        accountId = await setup.createAccount();
+        await app.loginWithEmailAndAccount(admin.email, accountId);
         adminId = admin.uid;
+        adminEmail = admin.email;
         printPageConsoleMessages(context);
 
     });
+
+    // entitlements
 
     test("can fetch my entitlements", async ({ lib }) => {
 
@@ -21,6 +27,8 @@ describe("SUPER ADMIN", () => {
         expect(entitlements.userAdmin).toEqual(true);
 
     });
+
+    // USER
 
     test("can fetch my user record", async ({ lib }) => {
 
@@ -56,6 +64,7 @@ describe("SUPER ADMIN", () => {
 
     });
 
+    // ACCOUNT
     test("can create an account", async ({ lib }) => {
 
         const accountId = await lib.createAccount({ name: "TEST account" });
@@ -89,6 +98,30 @@ describe("SUPER ADMIN", () => {
 
     });
 
+    test.only("can list users for an account", async ({ app, setup, lib }) => {
+
+        const account2Id = await setup.createAccount();
+
+        const user1Id = await setup.createUser({ accountId });
+        const user2Id = await setup.createUser({ accountId });
+        const user3Id = await setup.createUser({ accountId: account2Id });
+
+        const users = await lib.getUsers();
+        const userIds = users.map(u => u.id);
+        expect(userIds).toEqual(expect.arrayContaining([user1Id, user2Id]));
+        expect(userIds).not.toEqual(expect.arrayContaining([user3Id]));
+
+    });
+
+    test("can make an account admin", async ({ setup, lib }) => {
+
+        const accountId = await lib.createAccount({ name: "TEST account" });
+        const user = await setup.createUser({ accountId, waitForPublic: true, withLogin: true });
+        await lib.makeAccountAdmin({});
+
+    });
+
+    // TEAM
     test("can create a team", async ({ lib }) => {
 
         await lib.createTeam({ name: "TEST team" });
@@ -134,6 +167,7 @@ describe("SUPER ADMIN", () => {
 
     });
 
+    // INVITE
     test("can invite a new user to a team, can read the invite", async ({ lib }) => {
 
         const teamId = await lib.createTeam({ name: "TEST team" });
@@ -185,25 +219,4 @@ describe("SUPER ADMIN", () => {
 
 });
 
-function printPageConsoleMessages(context) {
-
-    const blackListMessages = ["Auth Emulator"];
-    const listen = page => page.on(
-        "console",
-        message => {
-            const text = message.text();
-            if (!blackListMessages.some(x => text.includes(x)))
-                console.log(message);
-        }
-    );
-    context.on("page", listen);
-    context.pages().forEach(page => listen(page));
-
-}
-
-function refPathFromJSON(ref) {
-
-    return ref._key.path.segments.join("/");
-
-}
 

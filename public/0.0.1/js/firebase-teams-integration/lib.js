@@ -87,6 +87,17 @@ export function getTeams({ user, getDoc, getDocs, setDoc, doc, deleteDoc, server
 
         },
 
+        async getUsers() {
+
+            return await readDocMapDocs({
+                collection: accounts,
+                id: user?.account,
+                code: "FGU-10",
+                extractMap: x => x.members
+            });
+
+        },
+
         // USER read
         async getMyUserRecord() {
 

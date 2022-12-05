@@ -20,46 +20,10 @@ export function app({ page }, use) {
 
         },
 
-        async loginAsSuperAdmin() {
+        async loginWithEmailAndAccount(email, accountId) {
 
-            await page.goto(new URL("?test-login=SueSuperAdmin", baseURL).href);
-            await expect(page.locator("body > nav")).toContainText("Sue Superadmin");
-
-        },
-
-        async loginAsAccountAdmin() {
-
-            await page.goto(new URL("?test-login=BobAccountAdmin", baseURL).href);
-            await expect(page.locator("body > nav")).toContainText("Bob Accountadmin");
-
-        },
-
-        async loginAsAccountAdmin2() {
-
-            await page.goto(new URL("?test-login=SueAccountAdmin", baseURL).href);
-            await expect(page.locator("body > nav")).toContainText("Sue Accountadmin");
-
-        },
-
-
-        async createATeam({ name }) {
-
-            await page.click("a", { hasText: "Create a team" });
-            await page.getByLabel("Team name").fill(name);
-            await page.locator("input[type=submit]", { hasText: "Create" }).click();
-
-        },
-
-        async deleteTeam({ name }) {
-
-            await page.locator("a", { hasText: name }).click();
-            await page.getByRole("button", "Delete").click();
-
-        },
-
-        async assertTeamIsListed({ name }) {
-
-            await expect(page.locator("li").getByText(name)).toBeVisible();
+            await page.goto(new URL(`?test-login=${encodeURIComponent(email)}&test-account=${encodeURIComponent(accountId)}`, baseURL).href);
+            await expect(page.locator("body > nav")).toContainText(email);
 
         }
 

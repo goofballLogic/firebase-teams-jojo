@@ -128,6 +128,10 @@ function handleAuthStateChanged({ onAuthStateChanged, auth }, callback) {
 
 async function accountForUser(uid) {
     try {
+
+        const testAccountId = isTest && new URL(location.href).searchParams.get("test-account");
+        if (testAccountId) return testAccountId;
+
         const accounts = await getDocs(
             query(
                 collection(db, "teams-accounts"),
@@ -135,6 +139,7 @@ async function accountForUser(uid) {
             )
         );
         return accounts.docs[0]?.id || uid;
+
     } catch (err) {
         console.warn("[AFU-10]", { uid }, err);
     }
