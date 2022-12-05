@@ -10,6 +10,13 @@ describe("Given super admin", () => {
 
     });
 
+    test("Then I can fetch my user record", async ({ lib }) => {
+
+        const record = await lib.getMyUserRecord();
+        expect(record.data.name).toEqual("Sue Superadmin");
+
+    });
+
     describe("When I create an account", () => {
 
         const accountName = `Account ${Math.random()}`;
@@ -146,7 +153,32 @@ describe("Given super admin", () => {
                 expect(refPathFromJSON(invite.data.team))
                     .toMatch(new RegExp(`/teams-teams/${teamId}`));
 
-            })
+            });
+
+            describe("And I try to accept the invitation myself", () => {
+
+                let caught;
+                beforeEach(async ({ lib }) => {
+
+                    try {
+
+                        await lib.acceptInvitation({ id: inviteId });
+
+                    } catch (err) {
+
+                        caught = err;
+
+                    }
+
+                });
+
+                test("The attempt fails", () => {
+
+                    expect(caught?.message).toMatch("PERMISSION_DENIED");
+
+                });
+
+            });
 
         });
 
