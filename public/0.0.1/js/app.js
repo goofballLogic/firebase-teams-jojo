@@ -136,7 +136,7 @@ async function accountForUser(uid) {
         );
         return accounts.docs[0]?.id || uid;
     } catch (err) {
-        console.warn("[AFU-1]", { uid }, err);
+        console.warn("[AFU-10]", { uid }, err);
     }
 }
 

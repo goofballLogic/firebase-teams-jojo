@@ -1,4 +1,5 @@
 import admin from "firebase-admin";
+import { poll } from "./poll.js";
 if (!("FIRESTORE_EMULATOR_HOST" in process.env))
     process.env['FIRESTORE_EMULATOR_HOST'] = "localhost:8080";
 if (!("FIREBASE_AUTH_EMULATOR_HOST" in process.env))
@@ -15,34 +16,20 @@ admin.initializeApp({
 
 const nonce = () => (Date.now() * Math.random()).toString().replace(".", "");
 const firestore = admin.firestore();
+const auth = admin.auth();
 
 export async function setup({ }, use) {
-
-    const teardowns = [];
 
     await use({
 
         async createSuperAdmin() {
 
             const n = nonce();
-            const auth = admin.auth();
             const name = `Super Admin ${n}`;
             const email = `super.admin.${n}@example.com`;
-            const userRecord = await auth.createUser({
-                email,
-                displayName: name,
-                emailVerified: true,
-                password: "Password1!",
-                disabled: false
-            });
-            teardowns.push(() => auth.deleteUser(userRecord.uid))
-
+            const userRecord = await this.createUserLogin({ name, email });
             await auth.setCustomUserClaims(userRecord.uid, { superAdmin: true });
-
-            const userRecordRef = firestore.collection("teams-users").doc(userRecord.uid);
-            await userRecordRef.set({ name, email });
-            teardowns.push(() => userRecordRef.delete());
-
+            await firestore.collection("teams-users").doc(userRecord.uid).set({ name, email });
             return userRecord;
 
         },
@@ -50,33 +37,48 @@ export async function setup({ }, use) {
         async createAccount() {
 
             const accountId = nonce();
-            const accountRef = firestore.collection("teams-accounts").doc(accountId);
-            await accountRef.set({ name: `Account ${accountId}` });
-            teardowns.push(() => accountRef.delete());
-
+            await firestore.collection("teams-accounts").doc(accountId).set({ name: `Account ${accountId}` });
             return accountId;
 
         },
 
-        async createUser({ accountId }) {
+        async createUser({ accountId, withLogin, waitForPublic }) {
 
             if (!accountId) throw new RangeError("accountId");
             const userId = nonce();
             const userRef = firestore.collection("teams-users").doc(userId);
-            await userRef.set({
-                name: `User ${userId}`,
-                email: `user.${userId}@example.com`
-            });
-            teardowns.push(() => userRef.delete());
-
+            const email = `user.${userId}@example.com`;
+            const name = `User ${userId}`;
+            await userRef.set({ name, email });
             await firestore.collection("teams-accounts").doc(accountId).set({ members: { [userId]: userRef } }, { merge: true });
+            if (withLogin) {
+
+                await this.createUserLogin({ name, email });
+
+            }
+            if (waitForPublic) {
+
+                const result = await poll(() => firestore.collection("teams-users-public").doc(userId).get(), 100);
+                if (!result)
+                    throw new Error("Public record was not detected");
+
+            }
             return userId;
+
+        },
+
+        async createUserLogin({ name, email }) {
+
+            return await auth.createUser({
+                email,
+                displayName: name,
+                emailVerified: true,
+                password: "Password1!",
+                disabled: false
+            });
 
         }
 
     });
-
-    while (teardowns.length)
-        await teardowns.pop();
 
 }

@@ -1,8 +1,7 @@
+import { nonce } from "./nonce.js";
 import { generateName } from "./nouns.js";
+import { poll } from "./poll.js";
 
-function nonce() {
-    return Date.now().toString() + Math.random().toString().substring(1).replace(".", "-");
-}
 export function getTeams({ user, getDoc, getDocs, setDoc, doc, deleteDoc, serverTimestamp, collections: { users, teams, accounts, usersPublic, invites } }) {
 
     return {
@@ -167,21 +166,32 @@ export function getTeams({ user, getDoc, getDocs, setDoc, doc, deleteDoc, server
         },
 
         // INVITE accept (update)
-        async acceptInvitation({ id }) {
+        async acceptInvitation({ id, waitForMembership }) {
 
             if (!user.uid) throw new Error("No user id specified [FAI-10]");
             const patch = {
                 accepted: {
-                    who: doc(usersPublic, user.uid),
+                    user: doc(usersPublic, user.uid),
                     when: serverTimestamp()
                 }
             };
-            return patchById({
+            await patchById({
                 collection: invites,
                 id,
                 code: "FAI-10",
                 patch
             });
+            if (waitForMembership) {
+
+                const invite = await getById(invites, id);
+                const teamRef = invite?.data?.team;
+
+                return await poll(async () => {
+                    const snap = await getDoc(teamRef);
+                    if (user.uid in snap.data().members) return true;
+                }, 20);
+
+            }
 
         }
 

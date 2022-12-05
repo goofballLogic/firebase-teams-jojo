@@ -59,6 +59,7 @@ service cloud.firestore {
       allow create, read, delete: if isSuperAdmin();
       allow create, read, delete: if request.auth != null && canCreateInvite()
       allow update: if request.auth != null && isAcceptInvitation();
+      allow read: if request.auth != null && resource.data.to.email.lower() == request.auth.token.email.lower()
     }
 
     match /teams-users/{userId} {

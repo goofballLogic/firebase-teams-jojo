@@ -53,6 +53,7 @@ exports.handleTeamsWrite = async function handleTeamsWrite({
             .filter(([id]) => !(afterMembers && (id in afterMembers)))
             .map(([, ref]) => ref);
         for (const removedMember of removedMembers) {
+            logger.debug("Removing member from team", { id: removedMember.id, teamId })
             await removedMember.set(
                 { teams: { [teamId]: deleteField } },
                 { merge: true }
@@ -64,6 +65,7 @@ exports.handleTeamsWrite = async function handleTeamsWrite({
             .filter(([id]) => !(beforeMembers && (id in beforeMembers)))
             .map(([, ref]) => ref);
         for (const addedMember of addedMembers) {
+            logger.debug("Adding member to team", { id: addedMember.id, teamId })
             await addedMember.set(
                 { teams: { [teamId]: teams.doc(teamId) } },
                 { merge: true }
@@ -84,7 +86,7 @@ exports.handleUsersWrite = async function handleUsersWrite({
         if ((afterUser?.email != beforeUser?.email) || (afterUser?.name != beforeUser?.name)) {
 
             const userId = change.after.id;
-            logger.debug("Writing user public record", { user: userId });
+            logger.debug("Updating user public record", { user: userId });
             const { name, email } = afterUser;
             const ref = usersPublic.doc(userId);
             await ref.set({ name, email });
