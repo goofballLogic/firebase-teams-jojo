@@ -17,6 +17,13 @@ describe("Given super admin", () => {
 
     });
 
+    test("Then I can fetch another user's user record", async ({ lib }) => {
+
+        const record = await lib.getUserRecord({ id: JOE_OLDUSER.id });
+        expect(record.data.name).toEqual("Joe Olduser");
+
+    });
+
     describe("When I create an account", () => {
 
         const accountName = `Account ${Math.random()}`;

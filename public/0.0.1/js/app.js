@@ -2,7 +2,7 @@ import { initializeApp }
     from "https://www.gstatic.com/firebasejs/9.14.0/firebase-app.js";
 import { signInWithEmailAndPassword, getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, connectAuthEmulator }
     from "https://www.gstatic.com/firebasejs/9.14.0/firebase-auth.js";
-import { getFirestore, collection, doc, getDoc, setDoc, deleteDoc, connectFirestoreEmulator, deleteField, where, query, getDocs }
+import { getFirestore, collection, doc, getDoc, setDoc, deleteDoc, connectFirestoreEmulator, deleteField, where, query, getDocs, serverTimestamp }
     from "https://www.gstatic.com/firebasejs/9.14.0/firebase-firestore.js";
 import { initTeams }
     from "./firebase-teams-integration/teams.js";
@@ -45,6 +45,7 @@ const integration = {
     getDocs,
     query,
     where,
+    serverTimestamp,
 
     collections: {
         users: collection(db, "teams-users"),

@@ -3,7 +3,7 @@ import { generateName } from "./nouns.js";
 function nonce() {
     return Date.now().toString() + Math.random().toString().substring(1).replace(".", "-");
 }
-export function getTeams({ user, getDoc, getDocs, setDoc, doc, deleteDoc, collections: { teams, accounts, usersPublic, invites } }) {
+export function getTeams({ user, getDoc, getDocs, setDoc, doc, deleteDoc, serverTimestamp, collections: { users, teams, accounts, usersPublic, invites } }) {
 
     return {
 
@@ -77,6 +77,19 @@ export function getTeams({ user, getDoc, getDocs, setDoc, doc, deleteDoc, collec
 
         },
 
+        // USER read
+        async getMyUserRecord() {
+
+            return getById(users, user.uid, "FGU-10");
+
+        },
+
+        async getUserRecord({ id }) {
+
+            return getById(users, id, "FGUR-10");
+
+        },
+
         // ACCOUNT crud
         async createAccount({ name }) {
 
@@ -121,6 +134,25 @@ export function getTeams({ user, getDoc, getDocs, setDoc, doc, deleteDoc, collec
         async getInvite({ id }) {
 
             return getById(invites, id, "FGI-10");
+
+        },
+
+        // INVITE accept (update)
+        async acceptInvitation({ id }) {
+
+            if (!user.uid) throw new Error("No user id specified [FAI-10]");
+            const patch = {
+                accepted: {
+                    who: doc(usersPublic, user.uid),
+                    when: serverTimestamp()
+                }
+            };
+            return patchById({
+                collection: invites,
+                id,
+                code: "FAI-10",
+                patch
+            });
 
         }
 
@@ -183,7 +215,7 @@ export function getTeams({ user, getDoc, getDocs, setDoc, doc, deleteDoc, collec
     async function getById(collection, id, code) {
 
         if (!id)
-            throw new Error(`No id specified[${code}]`);
+            throw new Error(`No id specified [${code}]`);
         const ref = doc(collection, id);
         const snap = await getDoc(ref);
         return {
