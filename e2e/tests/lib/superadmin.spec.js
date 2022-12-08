@@ -5,14 +5,13 @@ const { describe, beforeEach } = test;
 
 describe("SUPER ADMIN", () => {
 
-    let adminId, adminEmail, accountId;
+    let adminId, accountId;
     beforeEach(async ({ app, context, setup }) => {
 
         const admin = await setup.createSuperAdmin();
         accountId = await setup.createAccount();
         await app.loginWithEmailAndAccount(admin.email, accountId);
         adminId = admin.uid;
-        adminEmail = admin.email;
         printPageConsoleMessages(context);
 
     });
@@ -98,7 +97,7 @@ describe("SUPER ADMIN", () => {
 
     });
 
-    test.only("can list users for an account", async ({ app, setup, lib }) => {
+    test("can list users for an account", async ({ app, setup, lib }) => {
 
         const account2Id = await setup.createAccount();
 
@@ -113,11 +112,16 @@ describe("SUPER ADMIN", () => {
 
     });
 
-    test("can make an account admin", async ({ setup, lib }) => {
+    test("can make an account admin", async ({ setup, app, lib }) => {
 
-        const accountId = await lib.createAccount({ name: "TEST account" });
-        const user = await setup.createUser({ accountId, waitForPublic: true, withLogin: true });
-        await lib.makeAccountAdmin({});
+        const userId = await setup.createUser({ accountId, waitForPublic: true, withLogin: true });
+        const user = await lib.getUserRecord({ id: userId });
+        await lib.makeAccountAdmin({ id: accountId, userId });
+
+        await app.loginWithEmailAndAccount(user.data.email, accountId);
+
+        const entitlements = await lib.getEntitlements();
+        expect(entitlements).toMatchObject({ createAccount: false, createTeam: true, userAdmin: false });
 
     });
 
@@ -157,11 +161,11 @@ describe("SUPER ADMIN", () => {
 
     test("can add a team member", async ({ setup, lib }) => {
 
-        const accountId = await setup.createAccount();
         const userId = await setup.createUser({ accountId, waitForPublic: true });
         const teamId = await lib.createTeam({ name: "TEST team" });
         await lib.addTeamMember({ id: teamId, userId });
         const members = await lib.getTeamMembers({ id: teamId });
+        console.log(members);
         expect(members.map(m => m.id)).toEqual([userId]);
         expect(members.map(m => m.data.name)).toEqual([`User ${userId}`]);
 

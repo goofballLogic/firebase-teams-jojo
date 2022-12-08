@@ -9,10 +9,16 @@ export function getTeams({ user, getDoc, getDocs, setDoc, doc, deleteDoc, server
         async getEntitlements() {
 
             const isSuperAdmin = user?.superAdmin;
+
+            const account = await this.getAccount({ id: user.account });
+            const isAccountAdmin = account.data?.admins && (user?.uid in account.data.admins);
+
             return {
                 createAccount: isSuperAdmin,
-                createTeam: isSuperAdmin,
-                userAdmin: isSuperAdmin
+                createTeam: isSuperAdmin || isAccountAdmin,
+                userAdmin: isSuperAdmin,
+                isSuperAdmin,
+                isAccountAdmin
             };
 
         },
@@ -152,6 +158,14 @@ export function getTeams({ user, getDoc, getDocs, setDoc, doc, deleteDoc, server
         async deleteAccount({ id }) {
 
             await deleteById(accounts, id, "FDA-10");
+
+        },
+
+        async makeAccountAdmin({ id, userId }) {
+
+            if (!userId) throw new Error("No user id specified [FMAA-10]");
+            const patch = { admins: { [userId]: doc(usersPublic, userId) } };
+            return await patchById({ collection: accounts, id, code: "FMAA-20", patch });
 
         },
 

@@ -45,17 +45,20 @@ export async function setup({ }, use) {
         async createUser({ accountId, withLogin, waitForPublic }) {
 
             if (!accountId) throw new RangeError("accountId");
-            const userId = nonce();
-            const userRef = firestore.collection("teams-users").doc(userId);
-            const email = `user.${userId}@example.com`;
-            const name = `User ${userId}`;
-            await userRef.set({ name, email });
-            await firestore.collection("teams-accounts").doc(accountId).set({ members: { [userId]: userRef } }, { merge: true });
+            const n = nonce();
+            const email = `user.${n}@example.com`;
+            const name = `User ${n}`;
+            let userRecord;
             if (withLogin) {
 
-                await this.createUserLogin({ name, email });
+                userRecord = await this.createUserLogin({ name, email });
 
             }
+            const userId = userRecord?.uid || n;
+            const userRef = firestore.collection("teams-users").doc(userId);
+            await userRef.set({ name, email });
+            await firestore.collection("teams-accounts").doc(accountId).set({ members: { [userId]: userRef } }, { merge: true });
+
             if (waitForPublic) {
 
                 const result = await poll(() => firestore.collection("teams-users-public").doc(userId).get(), 100);
