@@ -56,7 +56,6 @@ const config = {
         ...devices['Desktop Chrome'],
       },
     },
-
     {
       name: 'firefox',
       use: {

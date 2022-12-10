@@ -14,11 +14,11 @@ export function getTeams({ user, getDoc, getDocs, setDoc, doc, deleteDoc, server
             const isAccountAdmin = account.data?.admins && (user?.uid in account.data.admins);
 
             return {
-                createAccount: isSuperAdmin,
-                createTeam: isSuperAdmin || isAccountAdmin,
-                userAdmin: isSuperAdmin,
-                isSuperAdmin,
-                isAccountAdmin
+                createAccount: !!isSuperAdmin,
+                createTeam: !!(isSuperAdmin || isAccountAdmin),
+                userAdmin: !!isSuperAdmin,
+                isSuperAdmin: !!isSuperAdmin,
+                isAccountAdmin: !!isAccountAdmin
             };
 
         },
@@ -76,6 +76,23 @@ export function getTeams({ user, getDoc, getDocs, setDoc, doc, deleteDoc, server
                 collection: teams,
                 id,
                 code: "FATM-10",
+                patch
+            });
+
+        },
+
+        async makeTeamAdmin({ id, userId }) {
+
+            if (!userId) throw new Error("No user id specified [FMTA-10]");
+            const patch = {
+                admins: {
+                    [userId]: doc(usersPublic, userId)
+                }
+            };
+            await patchById({
+                collection: teams,
+                id,
+                code: "FMTA-11",
                 patch
             });
 
