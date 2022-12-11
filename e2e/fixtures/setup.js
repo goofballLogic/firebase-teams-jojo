@@ -18,6 +18,12 @@ const nonce = () => (Date.now() * Math.random()).toString().replace(".", "");
 const firestore = admin.firestore();
 const auth = admin.auth();
 
+const accountsCollection = firestore.collection("teams-accounts");
+const usersCollection = firestore.collection("teams-users");
+const usersPrivateCollection = firestore.collection("teams-users-private");
+const teamsCollection = firestore.collection("teams-teams");
+const invitesCollection = firestore.collection("teams-invites");
+
 export async function setup({ }, use) {
 
     await use({
@@ -29,7 +35,7 @@ export async function setup({ }, use) {
             const email = `super.admin.${n}@example.com`;
             const userLogin = await this.createUserLogin({ name, email });
             await auth.setCustomUserClaims(userLogin.uid, { superAdmin: true });
-            await firestore.collection("teams-users").doc(userLogin.uid).set(
+            await usersPrivateCollection.doc(userLogin.uid).set(
                 { name, email }
             );
             return userLogin;
@@ -42,10 +48,9 @@ export async function setup({ }, use) {
             const name = `Account Admin ${n}`;
             const email = `account.admin.${n}@example.com`;
             const userLogin = await this.createUserLogin({ name, email });
-            const userPublicRef = firestore.collection("teams-users-public")
-                .doc(userLogin.uid);
-            await firestore.collection("teams-accounts").doc(accountId).set(
-                { admins: { [userLogin.uid]: userPublicRef } },
+            const usersRef = usersCollection.doc(userLogin.uid);
+            await accountsCollection.doc(accountId).set(
+                { admins: { [userLogin.uid]: usersRef } },
                 { merge: true }
             );
             return userLogin;
@@ -55,7 +60,7 @@ export async function setup({ }, use) {
         async createAccount({ entitlements_teams = 9999 } = {}) {
 
             const accountId = nonce();
-            await firestore.collection("teams-accounts").doc(accountId).set({
+            await accountsCollection.doc(accountId).set({
                 name: `Account ${accountId}`,
                 entitlements: {
                     teams: entitlements_teams
@@ -78,15 +83,16 @@ export async function setup({ }, use) {
 
             }
             const userId = userRecord?.uid || n;
-            const userRef = await this.createUserRecord({ uid: userId, name, email });
-            const userPublicRef = firestore.collection("teams-users-public").doc(userId);
-            await firestore.collection("teams-accounts").doc(accountId).set({
-                members: { [userId]: userPublicRef }
-            }, { merge: true });
+            await this.createUserPrivate({ uid: userId, name, email });
+            const userRef = usersCollection.doc(userId);
+            await accountsCollection.doc(accountId).set(
+                { members: { [userId]: userRef } },
+                { merge: true }
+            );
 
             if (waitForPublic) {
 
-                const result = await poll(() => userPublicRef.get(), 100);
+                const result = await poll(() => userRef.get(), 100);
                 if (!result)
                     throw new Error("Public record was not detected");
 
@@ -107,21 +113,19 @@ export async function setup({ }, use) {
 
         },
 
-        async createUserRecord({ uid, name, email }) {
+        async createUserPrivate({ uid, name, email }) {
 
-            const userRef = firestore.collection("teams-users").doc(uid);
-            await userRef.set({ name, email });
-            return userRef;
+            const usersPrivateRef = usersPrivateCollection.doc(uid);
+            await usersPrivateRef.set({ name, email });
+            return usersPrivateRef;
 
         },
 
         async listTeams() {
-            const snap = await firestore.collection("teams-teams").get();
+            const snap = await teamsCollection.get();
             return snap.docs;
         }
 
     });
-
-
 
 }

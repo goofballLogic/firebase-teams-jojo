@@ -63,12 +63,12 @@ service cloud.firestore {
       allow read: if resource.data.to.email.lower() == request.auth.token.email.lower()
     }
 
-    match /teams-users/{userId} {
+    match /teams-users-private/{userId} {
       allow read, write: if isSuperAdmin();
       allow create, read, write: if request.auth.uid == userId;
     }
 
-    match /teams-users-public/{userId} {
+    match /teams-users/{userId} {
       allow read: if request.auth != null;
     }
 

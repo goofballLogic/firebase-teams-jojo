@@ -41,10 +41,10 @@ const integration = {
     serverTimestamp,
 
     collections: {
-        users: collection(db, "teams-users"),
+        usersPrivate: collection(db, "teams-users-private"),
         teams: collection(db, "teams-teams"),
         invites: collection(db, "teams-invites"),
-        usersPublic: collection(db, "teams-users-public"),
+        users: collection(db, "teams-users"),
         accounts: collection(db, "teams-accounts")
     }
 

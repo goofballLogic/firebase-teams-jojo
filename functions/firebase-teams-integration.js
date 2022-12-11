@@ -74,9 +74,9 @@ exports.handleTeamsWrite = async function handleTeamsWrite({
     }
 }
 
-exports.handleUsersWrite = async function handleUsersWrite({
+exports.handleUsersPrivateWrite = async function handleUsersPrivateWrite({
     change,
-    usersPublic,
+    users,
     logger
 }) {
 
@@ -88,7 +88,7 @@ exports.handleUsersWrite = async function handleUsersWrite({
             const userId = change.after.id;
             logger.debug("Updating user public record", { user: userId });
             const { name, email } = afterUser;
-            const ref = usersPublic.doc(userId);
+            const ref = users.doc(userId);
             await ref.set({ name, email });
 
         }

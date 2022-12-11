@@ -2,7 +2,7 @@ import { nonce } from "./nonce.js";
 import { generateName } from "./nouns.js";
 import { poll } from "./poll.js";
 
-export function getTeams({ user, getDoc, getDocs, setDoc, doc, deleteDoc, serverTimestamp, where, query, collections: { users, teams, accounts, usersPublic, invites } }) {
+export function getTeams({ user, getDoc, getDocs, setDoc, doc, deleteDoc, serverTimestamp, where, query, collections: { users, teams, accounts, usersPrivate, invites } }) {
 
     return {
 
@@ -73,7 +73,7 @@ export function getTeams({ user, getDoc, getDocs, setDoc, doc, deleteDoc, server
             if (!userId) throw new Error("No user id specified [FATM-11]");
             const patch = {
                 members: {
-                    [userId]: doc(usersPublic, userId)
+                    [userId]: doc(users, userId)
                 }
             };
             await patchById({
@@ -90,7 +90,7 @@ export function getTeams({ user, getDoc, getDocs, setDoc, doc, deleteDoc, server
             if (!userId) throw new Error("No user id specified [FMTA-10]");
             const patch = {
                 admins: {
-                    [userId]: doc(usersPublic, userId)
+                    [userId]: doc(users, userId)
                 }
             };
             await patchById({
@@ -127,24 +127,24 @@ export function getTeams({ user, getDoc, getDocs, setDoc, doc, deleteDoc, server
 
         async getUser({ id }) {
 
-            return await getById(usersPublic, id, "FGU-11");
+            return await getById(users, id, "FGU-11");
 
         },
 
-        // USER read
+        // USER PRIVATE read
         async getMyUserRecord() {
 
-            return getById(users, user.uid, "FGU-10");
+            return getById(usersPrivate, user.uid, "FGU-10");
 
         },
 
         async getUserRecord({ id }) {
 
-            return getById(users, id, "FGUR-10");
+            return getById(usersPrivate, id, "FGUR-10");
 
         },
 
-        // USER update
+        // USER PRIVATE update
         async updateMyUserRecord({ name, email }) {
 
             const id = user.uid;
@@ -158,7 +158,12 @@ export function getTeams({ user, getDoc, getDocs, setDoc, doc, deleteDoc, server
             const patch = {};
             if (name) patch.name = name;
             if (email) patch.email = email;
-            await patchById({ collection: users, id, code: "FUMUR-10", patch });
+            await patchById({
+                collection: usersPrivate,
+                id,
+                code: "FUMUR-10",
+                patch
+            });
 
         },
 
@@ -191,7 +196,7 @@ export function getTeams({ user, getDoc, getDocs, setDoc, doc, deleteDoc, server
         async makeAccountAdmin({ id, userId }) {
 
             if (!userId) throw new Error("No user id specified [FMAA-10]");
-            const patch = { admins: { [userId]: doc(usersPublic, userId) } };
+            const patch = { admins: { [userId]: doc(users, userId) } };
             return await patchById({ collection: accounts, id, code: "FMAA-20", patch });
 
         },
@@ -202,7 +207,7 @@ export function getTeams({ user, getDoc, getDocs, setDoc, doc, deleteDoc, server
             if (!teamId) throw new Error("No team id specified [FITM-11]");
             if (!user.uid) throw new Error("No user id specified [FITM-10]");
             const data = {
-                from: doc(usersPublic, user.uid),
+                from: doc(users, user.uid),
                 team: doc(teams, teamId),
                 to: { email, name }
             }
@@ -223,7 +228,7 @@ export function getTeams({ user, getDoc, getDocs, setDoc, doc, deleteDoc, server
             if (!user.uid) throw new Error("No user id specified [FAI-10]");
             const patch = {
                 accepted: {
-                    user: doc(usersPublic, user.uid),
+                    user: doc(users, user.uid),
                     when: serverTimestamp()
                 }
             };

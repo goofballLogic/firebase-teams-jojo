@@ -19,7 +19,7 @@ export default function (spec) {
 
         if (!spec.fetchMyUserRecord) throw new Error("Test not implemented");
         // A
-        await setup.createUserRecord({
+        await setup.createUserPrivate({
             uid: state.adminId,
             name: "Elvis",
             email: "elvis@example.com"
@@ -310,7 +310,7 @@ export default function (spec) {
         });
         const invite = await lib.getInvite({ id: inviteId });
         const { adminId } = state;
-        expect(refPathFromJSON(invite.data.from)).toMatch(new RegExp(`/teams-users-public/${adminId}$`));
+        expect(refPathFromJSON(invite.data.from)).toMatch(new RegExp(`/teams-users/${adminId}$`));
         expect(refPathFromJSON(invite.data.team)).toMatch(new RegExp(`/teams-teams/${teamId}`));
 
     });
