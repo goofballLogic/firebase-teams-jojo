@@ -2,7 +2,7 @@ import { nonce } from "./nonce.js";
 import { generateName } from "./nouns.js";
 import { poll } from "./poll.js";
 
-export function getTeams({ user, getDoc, getDocs, setDoc, doc, deleteDoc, serverTimestamp, collections: { users, teams, accounts, usersPublic, invites } }) {
+export function getTeams({ user, getDoc, getDocs, setDoc, doc, deleteDoc, serverTimestamp, where, query, collections: { users, teams, accounts, usersPublic, invites } }) {
 
     return {
 
@@ -14,9 +14,9 @@ export function getTeams({ user, getDoc, getDocs, setDoc, doc, deleteDoc, server
             const isAccountAdmin = account.data?.admins && (user?.uid in account.data.admins);
 
             return {
-                createAccount: !!isSuperAdmin,
-                createTeam: !!(isSuperAdmin || isAccountAdmin),
-                userAdmin: !!isSuperAdmin,
+                createAccount: !!isSuperAdmin, // create accouns
+                createTeam: !!(isSuperAdmin || isAccountAdmin), // create a team in the current account
+                userAdmin: !!isSuperAdmin, // administer users directly
                 isSuperAdmin: !!isSuperAdmin,
                 isAccountAdmin: !!isAccountAdmin
             };
@@ -43,7 +43,11 @@ export function getTeams({ user, getDoc, getDocs, setDoc, doc, deleteDoc, server
 
         async listTeams() {
 
-            return await listCollection(teams);
+            const criteria = user.superAdmin
+                ? null
+                : where("account", "==", doc(accounts, user.account));
+            return await listCollection(teams, criteria);
+
         },
 
         async deleteTeam({ id }) {
@@ -118,6 +122,12 @@ export function getTeams({ user, getDoc, getDocs, setDoc, doc, deleteDoc, server
                 code: "FGU-10",
                 extractMap: x => x.members
             });
+
+        },
+
+        async getUser({ id }) {
+
+            return await getById(usersPublic, id, "FGU-11");
 
         },
 
@@ -285,8 +295,9 @@ export function getTeams({ user, getDoc, getDocs, setDoc, doc, deleteDoc, server
         await deleteDoc(ref);
     }
 
-    async function listCollection(collection) {
-        const snap = await getDocs(collection);
+    async function listCollection(collection, criteria) {
+        const target = criteria ? query(collection, criteria) : collection;
+        const snap = await getDocs(target);
         return snap.docs.map(d => ({
             id: d.id,
             data: d.data()
